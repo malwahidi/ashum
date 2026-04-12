@@ -377,8 +377,9 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "<b>الأوامر:</b>\n"
         "/scan - مسح جميع أسهم تداول\n"
         "/stock 2222 - تحليل سهم محدد (مع رسم بياني)\n"
-        "/backtest - اختبار الاستراتيجية على بيانات تاريخية\n"
-        "/backtest 2222 - اختبار سهم محدد\n"
+        "/portfolio - المحفظة الافتراضية (الصفقات المفتوحة)\n"
+        "/performance - أداء التداول الافتراضي\n"
+        "/backtest 2222 - اختبار سهم على بيانات تاريخية\n"
         "/stocks - قائمة الأسهم الشائعة\n"
         "/help - عرض المساعدة\n\n"
         "<b>درجات الإشارة:</b>\n"
@@ -460,6 +461,25 @@ async def cmd_backtest(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+async def cmd_portfolio(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """عرض المحفظة الافتراضية."""
+    from src.trading.paper_trader import format_portfolio_arabic, check_positions
+
+    # Update positions with current prices first
+    check_positions()
+
+    msg = format_portfolio_arabic()
+    await update.message.reply_html(msg)
+
+
+async def cmd_performance(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """عرض أداء التداول الافتراضي."""
+    from src.trading.paper_trader import format_performance_arabic
+
+    msg = format_performance_arabic()
+    await update.message.reply_html(msg)
+
+
 def create_telegram_app() -> Application:
     """إنشاء تطبيق بوت تيليجرام."""
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
@@ -467,6 +487,8 @@ def create_telegram_app() -> Application:
     app.add_handler(CommandHandler("scan", cmd_scan))
     app.add_handler(CommandHandler("stock", cmd_stock))
     app.add_handler(CommandHandler("backtest", cmd_backtest))
+    app.add_handler(CommandHandler("portfolio", cmd_portfolio))
+    app.add_handler(CommandHandler("performance", cmd_performance))
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("start", cmd_help))
     app.add_handler(CommandHandler("stocks", cmd_stocks))

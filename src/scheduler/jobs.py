@@ -32,6 +32,19 @@ async def morning_scan_job():
 
         await send_scan_results(result, stock_data)
 
+        # Auto-open paper trades for top BUY signals
+        from src.trading.paper_trader import open_trade
+        top_buys = result.get("top_buys", [])
+        opened = 0
+        for signal in top_buys[:3]:  # Top 3 BUY signals
+            if signal.get("grade") in ("STRONG", "MODERATE"):
+                trade = open_trade(signal)
+                if trade:
+                    opened += 1
+        if opened > 0:
+            from src.notifications.telegram import send_message
+            await send_message(f"\U0001f4bc تم فتح {opened} صفقة افتراضية تلقائياً. اكتب /portfolio للتفاصيل.")
+
         # Check if naqi list needs updating
         from src.data.tickers import check_naqi_update_needed
         naqi_reminder = check_naqi_update_needed()
@@ -46,11 +59,24 @@ async def morning_scan_job():
 
 
 async def intraday_scan_job():
-    """Run during market hours — check for new signals."""
+    """Run during market hours — check for new signals + paper positions."""
     logger.info("Running intraday scan job...")
     try:
+        # Check paper trading positions
+        from src.trading.paper_trader import check_positions
+        closed = check_positions()
+        if closed:
+            from src.notifications.telegram import send_message
+            for trade in closed:
+                icon = "\U0001f7e2" if trade["final_pnl"] > 0 else "\U0001f534"
+                await send_message(
+                    f"{icon} <b>صفقة افتراضية مغلقة:</b> {trade['ticker']}.SR\n"
+                    f"السبب: {trade['exit_reason']}\n"
+                    f"P&L: {trade['final_pnl']:+,.0f} ريال ({trade['final_pnl_pct']:+.1f}%)"
+                )
+
         from src.analysis.screener import run_market_scan
-        from src.notifications.telegram import send_message, format_signal_message
+        from src.notifications.telegram import send_message
 
         result = run_market_scan(save_to_db=True)
 
