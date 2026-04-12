@@ -286,7 +286,8 @@ TASI_INDEX = "^TASI.SR"
 
 # === الأسهم النقية - قائمة العصيمي (Al-Osaimi Pure Stocks) ===
 # Source: Argaam.com Sharia Compliant Companies - Dr. Mohammed Al-Osaimi
-# Updated: 2026-04 (update quarterly after financial reports)
+NAQI_LAST_UPDATED = "2026-04-12"  # Update this date when list is refreshed
+NAQI_UPDATE_DAYS = 90  # Remind after 90 days
 NAQI_TICKERS = {
     # Banks
     "1120", "1140", "1020",
@@ -363,6 +364,21 @@ def get_naqi_tickers() -> list[str]:
 def is_naqi(ticker: str) -> bool:
     """Check if a stock is naqi (pure/halal) per Al-Osaimi."""
     return ticker in NAQI_TICKERS
+
+
+def check_naqi_update_needed() -> str | None:
+    """Check if naqi list needs updating. Returns Arabic reminder message or None."""
+    from datetime import date, datetime
+    last_updated = datetime.strptime(NAQI_LAST_UPDATED, "%Y-%m-%d").date()
+    days_since = (date.today() - last_updated).days
+    if days_since >= NAQI_UPDATE_DAYS:
+        return (
+            f"\u26a0\ufe0f <b>تنبيه: تحديث قائمة الأسهم النقية</b>\n"
+            f"مضى {days_since} يوماً على آخر تحديث لقائمة العصيمي.\n"
+            f"يرجى مراجعة القائمة المحدثة على Argaam.com\n"
+            f"آخر تحديث: {NAQI_LAST_UPDATED}"
+        )
+    return None
 
 
 def get_tickers_by_sector(sector: str) -> dict:

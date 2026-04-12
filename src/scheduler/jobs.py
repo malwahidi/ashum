@@ -31,6 +31,14 @@ async def morning_scan_job():
             stock_data = fetch_multiple_stocks(top_tickers, period="6mo")
 
         await send_scan_results(result, stock_data)
+
+        # Check if naqi list needs updating
+        from src.data.tickers import check_naqi_update_needed
+        naqi_reminder = check_naqi_update_needed()
+        if naqi_reminder:
+            from src.notifications.telegram import send_message
+            await send_message(naqi_reminder)
+
         logger.info("Morning scan completed and sent.")
 
     except Exception as e:
