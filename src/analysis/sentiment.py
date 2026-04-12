@@ -1,24 +1,27 @@
 """
 AI News Sentiment Analysis
 ===========================
-Uses Claude API to analyze Arabic financial news and determine
-sentiment (bullish/bearish/neutral) for Saudi stocks.
+Uses Gemini (free) for daily analysis, Claude API ready for live trading phase.
+Analyzes Arabic financial sentiment for Saudi stocks.
 """
 
 import logging
 import json
-from datetime import date, datetime
+from datetime import date
 
-from config.settings import ANTHROPIC_API_KEY
+from config.settings import GEMINI_API_KEY, ANTHROPIC_API_KEY
 
 logger = logging.getLogger(__name__)
 
-# Sentiment cache: {ticker: {date, sentiment, score, summary}}
+# Sentiment cache: {ticker: {date, result}}
 _sentiment_cache = {}
 
 SENTIMENT_BULLISH_SCORE = 20
 SENTIMENT_BEARISH_SCORE = -20
 SENTIMENT_NEUTRAL_SCORE = 0
+
+# Which AI provider to use: "gemini" (free) or "claude" (paid, for live trading)
+AI_PROVIDER = "gemini"
 
 
 class StockSentiment:
@@ -40,41 +43,16 @@ class StockSentiment:
         return f"{icon} المشاعر: {label} ({self.confidence:.0%})\n  {self.summary}"
 
 
-async def analyze_stock_sentiment(ticker: str, stock_name: str) -> StockSentiment | None:
-    """
-    Analyze news sentiment for a stock using Claude API.
-    Results are cached for 1 day per stock.
-
-    Args:
-        ticker: Tadawul ticker number
-        stock_name: Company name for search
-
-    Returns:
-        StockSentiment or None if API unavailable.
-    """
-    if not ANTHROPIC_API_KEY:
-        return None
-
-    # Check cache
-    today = date.today()
-    cache_key = ticker
-    if cache_key in _sentiment_cache:
-        cached = _sentiment_cache[cache_key]
-        if cached.get("date") == today:
-            return cached.get("result")
-
-    try:
-        import anthropic
-
-        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-
-        prompt = f"""أنت محلل مالي متخصص في السوق السعودي (تداول).
+def _build_prompt(ticker: str, stock_name: str) -> str:
+    """Build the analysis prompt (shared between providers)."""
+    return f"""أنت محلل مالي متخصص في السوق السعودي (تداول).
 
 حلل الوضع الحالي لسهم {stock_name} (رمز {ticker}.SR) في السوق السعودي.
 
 بناءً على معرفتك العامة بالسوق والشركة، قيّم:
 1. هل الاتجاه العام للسهم إيجابي أم سلبي أم محايد؟
 2. هل هناك عوامل أساسية تدعم الشراء أو البيع؟
+3. ما هي المخاطر الرئيسية؟
 
 أجب بصيغة JSON فقط:
 {{
@@ -83,53 +61,122 @@ async def analyze_stock_sentiment(ticker: str, stock_name: str) -> StockSentimen
   "summary_ar": "ملخص قصير بالعربي (جملة واحدة)"
 }}"""
 
-        message = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=300,
-            messages=[{"role": "user", "content": prompt}]
+
+def _parse_response(response_text: str) -> dict:
+    """Parse JSON from AI response, handling code blocks."""
+    text = response_text.strip()
+    if "```" in text:
+        text = text.split("```")[1]
+        if text.startswith("json"):
+            text = text[4:]
+        text = text.strip()
+    return json.loads(text)
+
+
+async def _analyze_with_gemini(ticker: str, stock_name: str) -> StockSentiment | None:
+    """Analyze sentiment using Google Gemini (free)."""
+    if not GEMINI_API_KEY:
+        logger.warning("GEMINI_API_KEY not set")
+        return None
+
+    try:
+        from google import genai
+
+        client = genai.Client(api_key=GEMINI_API_KEY)
+
+        prompt = _build_prompt(ticker, stock_name)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
         )
-
-        response_text = message.content[0].text.strip()
-
-        # Parse JSON from response
-        # Handle potential markdown code blocks
-        if "```" in response_text:
-            response_text = response_text.split("```")[1]
-            if response_text.startswith("json"):
-                response_text = response_text[4:]
-            response_text = response_text.strip()
-
-        data = json.loads(response_text)
+        data = _parse_response(response.text)
 
         sentiment = data.get("sentiment", "neutral")
         confidence = float(data.get("confidence", 0.5))
         summary = data.get("summary_ar", "لا يتوفر تحليل")
 
-        # Map sentiment to score
         score_map = {
             "bullish": SENTIMENT_BULLISH_SCORE,
             "bearish": SENTIMENT_BEARISH_SCORE,
             "neutral": SENTIMENT_NEUTRAL_SCORE,
         }
-        score = score_map.get(sentiment, 0)
+        score = int(score_map.get(sentiment, 0) * confidence)
 
-        # Apply confidence weighting
-        score = int(score * confidence)
+        return StockSentiment(ticker, sentiment, score, summary, confidence)
 
-        result = StockSentiment(ticker, sentiment, score, summary, confidence)
-
-        # Cache
-        _sentiment_cache[cache_key] = {"date": today, "result": result}
-
-        logger.info(f"Sentiment for {ticker}: {sentiment} ({confidence:.0%}) score={score}")
-        return result
-
-    except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse sentiment response for {ticker}: {e}")
-        return None
     except Exception as e:
-        logger.error(f"Sentiment analysis failed for {ticker}: {e}")
+        logger.error(f"Gemini sentiment failed for {ticker}: {e}")
         return None
+
+
+# ============================================================
+# Claude API — commented out, ready for live trading phase
+# To activate: change AI_PROVIDER = "claude" and set ANTHROPIC_API_KEY
+# ============================================================
+#
+# async def _analyze_with_claude(ticker: str, stock_name: str) -> StockSentiment | None:
+#     """Analyze sentiment using Claude API (paid, higher quality)."""
+#     if not ANTHROPIC_API_KEY:
+#         return None
+#
+#     try:
+#         import anthropic
+#
+#         client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+#         prompt = _build_prompt(ticker, stock_name)
+#
+#         message = client.messages.create(
+#             model="claude-haiku-4-5-20251001",
+#             max_tokens=300,
+#             messages=[{"role": "user", "content": prompt}]
+#         )
+#
+#         data = _parse_response(message.content[0].text)
+#
+#         sentiment = data.get("sentiment", "neutral")
+#         confidence = float(data.get("confidence", 0.5))
+#         summary = data.get("summary_ar", "لا يتوفر تحليل")
+#
+#         score_map = {
+#             "bullish": SENTIMENT_BULLISH_SCORE,
+#             "bearish": SENTIMENT_BEARISH_SCORE,
+#             "neutral": SENTIMENT_NEUTRAL_SCORE,
+#         }
+#         score = int(score_map.get(sentiment, 0) * confidence)
+#
+#         return StockSentiment(ticker, sentiment, score, summary, confidence)
+#
+#     except Exception as e:
+#         logger.error(f"Claude sentiment failed for {ticker}: {e}")
+#         return None
+
+
+async def analyze_stock_sentiment(ticker: str, stock_name: str) -> StockSentiment | None:
+    """
+    Analyze sentiment for a stock using the configured AI provider.
+    Results are cached for 1 day per stock.
+    """
+    # Check cache
+    today = date.today()
+    if ticker in _sentiment_cache:
+        cached = _sentiment_cache[ticker]
+        if cached.get("date") == today:
+            return cached.get("result")
+
+    # Use configured provider
+    result = await _analyze_with_gemini(ticker, stock_name)
+
+    # To switch to Claude later, uncomment:
+    # if AI_PROVIDER == "claude":
+    #     result = await _analyze_with_claude(ticker, stock_name)
+    # else:
+    #     result = await _analyze_with_gemini(ticker, stock_name)
+
+    if result:
+        _sentiment_cache[ticker] = {"date": today, "result": result}
+        logger.info(f"Sentiment for {ticker}: {result.sentiment} ({result.confidence:.0%}) score={result.score}")
+
+    return result
 
 
 def get_cached_sentiment(ticker: str) -> StockSentiment | None:

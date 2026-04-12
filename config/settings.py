@@ -10,8 +10,9 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 # Database
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://ashum:ashum@localhost:5432/ashum")
 
-# Claude API
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+# AI APIs
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")  # For live trading phase
 
 # Tadawul Market Hours (Asia/Riyadh UTC+3)
 MARKET_TIMEZONE = "Asia/Riyadh"

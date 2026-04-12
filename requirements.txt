@@ -22,7 +22,8 @@ mplfinance>=0.12.10b0
 matplotlib>=3.8.0
 
 # AI / Sentiment
-anthropic>=0.40.0
+google-genai>=1.0.0
+# anthropic>=0.40.0  # Uncomment for live trading phase
 
 # Config
 python-dotenv>=1.0.0
