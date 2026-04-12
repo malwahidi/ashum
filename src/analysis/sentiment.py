@@ -43,16 +43,34 @@ class StockSentiment:
         return f"{icon} المشاعر: {label} ({self.confidence:.0%})\n  {self.summary}"
 
 
-def _build_prompt(ticker: str, stock_name: str) -> str:
-    """Build the analysis prompt (shared between providers)."""
-    return f"""أنت محلل مالي متخصص في السوق السعودي (تداول).
+def _build_prompt(ticker: str, stock_name: str, news_headlines: list[str] = None) -> str:
+    """Build the analysis prompt with real news if available."""
+    if news_headlines:
+        headlines_text = "\n".join(f"- {h}" for h in news_headlines)
+        return f"""أنت محلل مالي متخصص في السوق السعودي (تداول).
+
+حلل سهم {stock_name} (رمز {ticker}.SR) بناءً على الأخبار التالية:
+
+{headlines_text}
+
+بناءً على هذه الأخبار الحقيقية:
+1. هل تأثير الأخبار إيجابي أم سلبي أم محايد على السهم؟
+2. ما مدى تأثير هذه الأخبار على سعر السهم؟
+
+أجب بصيغة JSON فقط:
+{{
+  "sentiment": "bullish" أو "bearish" أو "neutral",
+  "confidence": رقم بين 0.0 و 1.0,
+  "summary_ar": "ملخص قصير بالعربي (جملة واحدة) يوضح تأثير الأخبار"
+}}"""
+    else:
+        return f"""أنت محلل مالي متخصص في السوق السعودي (تداول).
 
 حلل الوضع الحالي لسهم {stock_name} (رمز {ticker}.SR) في السوق السعودي.
 
 بناءً على معرفتك العامة بالسوق والشركة، قيّم:
 1. هل الاتجاه العام للسهم إيجابي أم سلبي أم محايد؟
 2. هل هناك عوامل أساسية تدعم الشراء أو البيع؟
-3. ما هي المخاطر الرئيسية؟
 
 أجب بصيغة JSON فقط:
 {{
@@ -73,8 +91,8 @@ def _parse_response(response_text: str) -> dict:
     return json.loads(text)
 
 
-async def _analyze_with_gemini(ticker: str, stock_name: str) -> StockSentiment | None:
-    """Analyze sentiment using Google Gemini (free)."""
+async def _analyze_with_gemini(ticker: str, stock_name: str, news_headlines: list[str] = None) -> StockSentiment | None:
+    """Analyze sentiment using Google Gemini with real news."""
     if not GEMINI_API_KEY:
         logger.warning("GEMINI_API_KEY not set")
         return None
@@ -84,7 +102,7 @@ async def _analyze_with_gemini(ticker: str, stock_name: str) -> StockSentiment |
 
         client = genai.Client(api_key=GEMINI_API_KEY)
 
-        prompt = _build_prompt(ticker, stock_name)
+        prompt = _build_prompt(ticker, stock_name, news_headlines)
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt,
@@ -153,7 +171,9 @@ async def _analyze_with_gemini(ticker: str, stock_name: str) -> StockSentiment |
 
 async def analyze_stock_sentiment(ticker: str, stock_name: str) -> StockSentiment | None:
     """
-    Analyze sentiment for a stock using the configured AI provider.
+    Analyze sentiment for a stock using real news + AI.
+    1. Fetch real news headlines from Argaam/MarketAux
+    2. Send to Gemini for analysis
     Results are cached for 1 day per stock.
     """
     # Check cache
@@ -163,8 +183,17 @@ async def analyze_stock_sentiment(ticker: str, stock_name: str) -> StockSentimen
         if cached.get("date") == today:
             return cached.get("result")
 
-    # Use configured provider
-    result = await _analyze_with_gemini(ticker, stock_name)
+    # Fetch real news for this stock
+    from src.analysis.news import get_stock_news
+    news_headlines = get_stock_news(ticker, stock_name)
+
+    if news_headlines:
+        logger.info(f"Found {len(news_headlines)} news items for {ticker}")
+    else:
+        logger.info(f"No specific news for {ticker}, using general analysis")
+
+    # Analyze with Gemini (with real news if available)
+    result = await _analyze_with_gemini(ticker, stock_name, news_headlines)
 
     # To switch to Claude later, uncomment:
     # if AI_PROVIDER == "claude":
