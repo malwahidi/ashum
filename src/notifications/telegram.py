@@ -133,10 +133,20 @@ def format_scan_summary(scan_result: dict) -> str:
 
     now = datetime.now(RIYADH_TZ).strftime("%Y-%m-%d %H:%M")
 
+    # Market regime info
+    market_regime = scan_result.get("market_regime")
+    regime_text = market_regime.to_arabic() if market_regime else ""
+
     msg = (
-        f"\U0001f50d <b>مسح سوق تداول - أسهم</b>\n"
+        f"\U0001f50d <b>مسح سوق تداول الذكي - أسهم</b>\n"
         f"\U0001f4c5 {now} (الرياض)\n"
         f"\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"
+    )
+
+    if regime_text:
+        msg += f"\U0001f3e6 <b>حالة السوق:</b>\n{regime_text}\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"
+
+    msg += (
         f"\U0001f4ca الأسهم المفحوصة: {stats.get('total_scanned', 0)}\n"
         f"\U0001f7e2 إشارات شراء: {stats.get('buy_signals', 0)}\n"
         f"\U0001f534 إشارات بيع: {stats.get('sell_signals', 0)}\n"
