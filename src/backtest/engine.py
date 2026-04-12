@@ -16,7 +16,8 @@ from src.data.fetcher import fetch_multiple_stocks, fetch_stock_history
 from src.data.tickers import get_stock_info
 from config.settings import (
     STOP_LOSS_PERCENT, TAKE_PROFIT_PERCENT, SIGNAL_THRESHOLD,
-    MIN_HISTORY_DAYS,
+    MIN_HISTORY_DAYS, TRAILING_STOP_ACTIVATION, TRAILING_STOP_DISTANCE,
+    MAX_HOLDING_DAYS,
 )
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,6 @@ logger = logging.getLogger(__name__)
 DEFAULT_INITIAL_CAPITAL = 100_000  # 100K SAR
 DEFAULT_POSITION_SIZE_PCT = 10  # 10% of capital per trade
 MAX_OPEN_POSITIONS = 10
-MAX_HOLDING_DAYS = 10  # Force exit after 10 trading days
 
 
 class Trade:
@@ -46,6 +46,8 @@ class Trade:
         self.take_profit = take_profit
         self.position_size = position_size
         self.shares = int(position_size / entry_price)
+        self.highest_price = entry_price  # For trailing stop
+        self.trailing_active = False
 
         # Filled on exit
         self.exit_date = None
@@ -299,9 +301,23 @@ class BacktestEngine:
             days_held = (current_date - trade.entry_date).days
 
             if trade.signal_type == "BUY":
+                # Update highest price for trailing stop
+                if high > trade.highest_price:
+                    trade.highest_price = high
+
+                # Activate trailing stop when profit exceeds activation threshold
+                gain_pct = (trade.highest_price - trade.entry_price) / trade.entry_price * 100
+                if gain_pct >= TRAILING_STOP_ACTIVATION:
+                    trade.trailing_active = True
+                    trailing_sl = trade.highest_price * (1 - TRAILING_STOP_DISTANCE / 100)
+                    # Move stop-loss up (never down)
+                    if trailing_sl > trade.stop_loss:
+                        trade.stop_loss = trailing_sl
+
                 # Check stop-loss (price went below SL)
                 if low <= trade.stop_loss:
-                    to_close.append((ticker, current_date, trade.stop_loss, "stop_loss"))
+                    exit_reason = "trailing_stop" if trade.trailing_active else "stop_loss"
+                    to_close.append((ticker, current_date, trade.stop_loss, exit_reason))
                 # Check take-profit (price went above TP)
                 elif high >= trade.take_profit:
                     to_close.append((ticker, current_date, trade.take_profit, "take_profit"))
@@ -309,8 +325,20 @@ class BacktestEngine:
                 elif days_held >= MAX_HOLDING_DAYS:
                     to_close.append((ticker, current_date, close, "timeout"))
             else:  # SELL
+                # Update lowest price for trailing stop
+                if low < trade.highest_price or trade.highest_price == trade.entry_price:
+                    trade.highest_price = min(low, trade.highest_price) if trade.highest_price < trade.entry_price else low
+
+                gain_pct = (trade.entry_price - trade.highest_price) / trade.entry_price * 100
+                if gain_pct >= TRAILING_STOP_ACTIVATION:
+                    trade.trailing_active = True
+                    trailing_sl = trade.highest_price * (1 + TRAILING_STOP_DISTANCE / 100)
+                    if trailing_sl < trade.stop_loss:
+                        trade.stop_loss = trailing_sl
+
                 if high >= trade.stop_loss:
-                    to_close.append((ticker, current_date, trade.stop_loss, "stop_loss"))
+                    exit_reason = "trailing_stop" if trade.trailing_active else "stop_loss"
+                    to_close.append((ticker, current_date, trade.stop_loss, exit_reason))
                 elif low <= trade.take_profit:
                     to_close.append((ticker, current_date, trade.take_profit, "take_profit"))
                 elif days_held >= MAX_HOLDING_DAYS:

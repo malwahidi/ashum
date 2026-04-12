@@ -8,7 +8,10 @@ from telegram.ext import (
     Application, CommandHandler, ContextTypes,
 )
 
-from config.settings import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, STRONG_THRESHOLD, MODERATE_THRESHOLD
+from config.settings import (
+    TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, STRONG_THRESHOLD, MODERATE_THRESHOLD,
+    STOP_LOSS_PERCENT, TAKE_PROFIT_PERCENT, TRAILING_STOP_ACTIVATION,
+)
 from src.data.tickers import get_stock_info
 from src.notifications.charts import generate_stock_chart
 from src.analysis.technical import compute_indicators, get_latest_indicators
@@ -60,9 +63,9 @@ def format_signal_message(signal: dict) -> str:
         f"\U0001f4c8 RSI: {rsi_display}\n"
         f"\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"
         f"\U0001f6e1 <b>إدارة المخاطر:</b>\n"
-        f"  \U0001f6d1 وقف الخسارة: <b>{stop_loss:.2f} ريال</b> (-3%)\n"
-        f"  \U0001f3af الهدف: <b>{take_profit:.2f} ريال</b> (+6%)\n"
-        f"  \u2696\ufe0f نسبة المخاطرة/العائد: 1:2\n"
+        f"  \U0001f6d1 وقف الخسارة: <b>{stop_loss:.2f} ريال</b> (-{STOP_LOSS_PERCENT}%)\n"
+        f"  \U0001f3af الهدف: <b>{take_profit:.2f} ريال</b> (+{TAKE_PROFIT_PERCENT}%)\n"
+        f"  \U0001f4ab وقف متحرك: يتفعل عند +{TRAILING_STOP_ACTIVATION}%\n"
         f"\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"
         f"<b>الأسباب:</b>\n{reasons_text}\n"
         f"\U0001f4a1 <i>{safety_note}</i>\n"
@@ -332,8 +335,8 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "\U0001f7e1\U0001f7e1 متوسطة (55-69) - كن حذراً\n"
         "\U0001f7e0 ضعيفة (40-54) - للمراقبة فقط\n\n"
         "<b>ميزات الأمان:</b>\n"
-        "\U0001f6e1 كل إشارة تتضمن وقف خسارة وهدف\n"
-        "\u2696\ufe0f نسبة المخاطرة/العائد: 1:2 (خسارة 3%، ربح 6%)\n\n"
+        "\U0001f6e1 كل إشارة تتضمن وقف خسارة وهدف ووقف متحرك\n"
+        "\u2696\ufe0f وقف خسارة 5%، هدف 8%، وقف متحرك عند +3%\n\n"
         "<b>المسح التلقائي:</b>\n"
         "البوت يعمل تلقائياً أحد-خميس خلال ساعات التداول\n"
         "(10:00-15:00 بتوقيت الرياض)\n\n"

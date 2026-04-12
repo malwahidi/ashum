@@ -38,3 +38,6 @@ TOP_SIGNALS_COUNT = 10  # Max signals to send per scan
 # Risk Management
 STOP_LOSS_PERCENT = 3.0  # Default stop-loss: 3% below entry
 TAKE_PROFIT_PERCENT = 6.0  # Default take-profit: 6% above entry (2:1 ratio)
+TRAILING_STOP_ACTIVATION = 99.0  # Disabled for now
+TRAILING_STOP_DISTANCE = 1.5  # Trail distance
+MAX_HOLDING_DAYS = 10  # Max days to hold a trade
