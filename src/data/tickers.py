@@ -284,6 +284,66 @@ TADAWUL_STOCKS = {
 # TASI Index
 TASI_INDEX = "^TASI.SR"
 
+# === الأسهم النقية - قائمة العصيمي (Al-Osaimi Pure Stocks) ===
+# Source: Argaam.com Sharia Compliant Companies - Dr. Mohammed Al-Osaimi
+# Updated: 2026-04 (update quarterly after financial reports)
+NAQI_TICKERS = {
+    # Banks
+    "1120", "1140", "1020",
+    # Petrochemicals
+    "2170", "2210", "2010", "2020", "2250", "2290", "2310", "2350", "2001", "2330",
+    # Cement
+    "3010", "3080", "3040", "3030", "3090", "3020", "3091", "3004", "3002", "3003",
+    # Oil & Gas / Energy
+    "4200", "2080", "4050", "2222", "2381", "2223", "2030",
+    # Glass / Industrial
+    "2150", "4145", "4144",
+    # Trade & Retail
+    "4003", "1214", "4240", "4001", "4160", "4180", "4190", "4006", "4163", "4011",
+    "4008", "4051", "4191", "4012", "4161", "4192", "4164", "4193", "4165",
+    # Pharma & Healthcare
+    "4016", "4015", "2230", "2070", "1212", "4017", "4013", "4009", "4007", "4018",
+    "4019", "4005", "4004", "4002",
+    # Education
+    "4290", "4292", "4291",
+    # Food & Beverages / Agriculture
+    "4162", "6013", "6012", "6004", "2287", "2284", "6015", "2283", "6014", "2281",
+    "2285", "2286", "6016", "2288", "2282", "6002", "6001", "2270", "2050", "2280",
+    "2100", "6010", "6020", "6040", "6050", "6060", "6070", "6090", "4061",
+    # Multi-Sector / Industrial
+    "4140", "4080", "4130", "2120", "2140", "1832",
+    # Energy & Utilities
+    "2082", "2083", "4146", "2081", "5110",
+    # Insurance
+    "8010", "8190", "8050", "8180", "8230", "8150", "8210", "8070", "8200", "8120",
+    "8020", "8170", "8060", "8030", "8260", "8160", "8250", "8240", "8012", "8300", "8311",
+    # Manufacturing / Materials
+    "1302", "1201", "1301", "1320", "2360", "1213", "2320", "2340", "1210", "2370",
+    "2300", "2090", "2160", "2110", "2040", "2180", "2200", "2220", "2130", "2240",
+    "4143", "4194", "1321", "4148", "1202", "1304", "4142", "1303", "3008", "4141",
+    "1323", "3007",
+    # Mining
+    "1322", "1211",
+    # REITs
+    "4349", "4335", "4336", "4337", "4338", "4344", "4339", "4340", "4345", "4342",
+    "4346", "4347", "4348", "4331", "4330", "4333", "4332",
+    # Real Estate
+    "4321", "4325", "4320", "4324", "4322", "4323", "4310", "4220", "4230", "4090",
+    "4300", "4250", "4150", "4020", "4100",
+    # Transportation
+    "4110", "4040", "4030", "2190", "4260", "4262", "4031", "4261",
+    # Media
+    "4071", "4210", "4270", "4070",
+    # Hotels & Tourism
+    "4170", "1810", "1820",
+    # Telecom
+    "7010", "7020", "7040",
+    # IT / Technology
+    "7202", "7200", "7201", "7204", "7211", "7203", "8313",
+    # HR Services
+    "1833", "1834", "1835", "1831",
+}
+
 
 def get_yf_ticker(ticker: str) -> str:
     """Convert Tadawul ticker to yfinance format."""
@@ -293,6 +353,16 @@ def get_yf_ticker(ticker: str) -> str:
 def get_all_yf_tickers() -> list[str]:
     """Get all tickers in yfinance format."""
     return [get_yf_ticker(t) for t in TADAWUL_STOCKS]
+
+
+def get_naqi_tickers() -> list[str]:
+    """Get only pure (naqi) stock tickers per Al-Osaimi list."""
+    return [t for t in TADAWUL_STOCKS if t in NAQI_TICKERS]
+
+
+def is_naqi(ticker: str) -> bool:
+    """Check if a stock is naqi (pure/halal) per Al-Osaimi."""
+    return ticker in NAQI_TICKERS
 
 
 def get_tickers_by_sector(sector: str) -> dict:

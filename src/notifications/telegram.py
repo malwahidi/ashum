@@ -138,7 +138,8 @@ def format_scan_summary(scan_result: dict) -> str:
     regime_text = market_regime.to_arabic() if market_regime else ""
 
     msg = (
-        f"\U0001f50d <b>مسح سوق تداول الذكي - أسهم</b>\n"
+        f"\U0001f50d <b>مسح الأسهم النقية - تداول</b>\n"
+        f"\u2705 أسهم نقية فقط (العصيمي)\n"
         f"\U0001f4c5 {now} (الرياض)\n"
         f"\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"
     )

@@ -2,7 +2,7 @@ import logging
 from datetime import date, datetime
 
 from src.data.fetcher import fetch_multiple_stocks
-from src.data.tickers import TADAWUL_STOCKS
+from src.data.tickers import TADAWUL_STOCKS, get_naqi_tickers
 from src.data.repository import save_signal, save_scan_result
 from src.analysis.signals import scan_all_stocks, get_top_signals
 from src.analysis.market_regime import detect_market_regime
@@ -27,9 +27,9 @@ def run_market_scan(
         Dict with scan results + market_regime + sector_ranking.
     """
     if tickers is None:
-        tickers = list(TADAWUL_STOCKS.keys())
+        tickers = get_naqi_tickers()  # Only pure stocks (Al-Osaimi)
 
-    logger.info(f"Starting smart market scan: {len(tickers)} stocks")
+    logger.info(f"Starting smart scan (naqi only): {len(tickers)} stocks")
 
     # 1. Fetch data
     stock_data = fetch_multiple_stocks(tickers, period=period)
