@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: ashum-db
+    environment:
+      POSTGRES_USER: ashum
+      POSTGRES_PASSWORD: ashum
+      POSTGRES_DB: ashum
+    ports:
+      - "5432:5432"
+    volumes:
+      - ashum_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: ashum-bot
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://ashum:ashum@db:5432/ashum
+    restart: unless-stopped
+
+volumes:
+  ashum_data:

@@ -1,0 +1,9 @@
+.env
+*.pyc
+__pycache__/
+ashum.log
+test_chart.png
+*.egg-info/
+.eggs/
+dist/
+build/
