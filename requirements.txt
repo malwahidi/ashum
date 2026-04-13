@@ -28,6 +28,9 @@ google-genai>=1.0.0
 # Config
 python-dotenv>=1.0.0
 
+# Web Dashboard
+streamlit>=1.40.0
+
 # News
 feedparser>=6.0.0
 
