@@ -85,7 +85,7 @@ def api_stock(ticker):
         from src.analysis.signals import generate_signal
 
         info = get_stock_info(ticker) or {"name": ticker, "sector": ""}
-        df = fetch_stock_history(ticker, period="6mo")
+        df = fetch_stock_history(ticker, period="1y")
 
         if df.empty:
             return jsonify({"error": "no data"}), 404
