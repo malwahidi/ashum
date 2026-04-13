@@ -13,6 +13,82 @@ from config.settings import (
 logger = logging.getLogger(__name__)
 
 
+# Trading rules
+MAX_BUYS_PER_DAY = 3
+MAX_OPEN_POSITIONS = 5
+MIN_GRADE = "STRONG"  # Only buy STRONG signals (70+)
+
+# Track daily buys to enforce limit
+_today_buys = {"date": None, "count": 0, "tickers_sold_today": set()}
+
+
+def _can_buy_today() -> bool:
+    """Check if we can still buy today."""
+    from datetime import date
+    today = date.today()
+    if _today_buys["date"] != today:
+        _today_buys["date"] = today
+        _today_buys["count"] = 0
+        _today_buys["tickers_sold_today"] = set()
+    return _today_buys["count"] < MAX_BUYS_PER_DAY
+
+
+def _record_buy():
+    _today_buys["count"] += 1
+
+
+def _record_sell(ticker: str):
+    _today_buys["tickers_sold_today"].add(ticker)
+
+
+def _was_sold_today(ticker: str) -> bool:
+    from datetime import date
+    if _today_buys["date"] != date.today():
+        return False
+    return ticker in _today_buys["tickers_sold_today"]
+
+
+async def _auto_buy_strong_signals(result: dict):
+    """
+    Intelligent auto-buy: STRONG signals only, max 3/day, max 5 total.
+    Works for both morning and intraday scans.
+    """
+    from src.trading.paper_trader import open_trade, get_portfolio
+
+    portfolio = get_portfolio()
+    open_count = portfolio["num_positions"]
+
+    top_buys = result.get("top_buys", [])
+    strong_buys = [s for s in top_buys if s.get("grade") == MIN_GRADE]
+
+    if not strong_buys:
+        return 0
+
+    opened = 0
+    for signal in strong_buys:
+        # Check all limits
+        if not _can_buy_today():
+            break
+        if open_count + opened >= MAX_OPEN_POSITIONS:
+            break
+        if _was_sold_today(signal["ticker"]):
+            continue  # Don't rebuy a stock sold today
+
+        trade = open_trade(signal)
+        if trade:
+            opened += 1
+            _record_buy()
+
+    if opened > 0:
+        from src.notifications.telegram import send_message
+        await send_message(
+            f"\U0001f4bc <b>تم فتح {opened} صفقة افتراضية (إشارات قوية فقط)</b>\n"
+            f"اكتب /portfolio للتفاصيل."
+        )
+
+    return opened
+
+
 async def morning_scan_job():
     """Run after market open — full market scan with notifications."""
     logger.info("Running morning scan job...")
@@ -23,27 +99,16 @@ async def morning_scan_job():
 
         result = run_market_scan()
 
-        # Fetch data again for charts (or reuse from scan)
+        # Fetch data for charts
         top_tickers = [s["ticker"] for s in result.get("top_buys", [])[:3]]
         stock_data = {}
         if top_tickers:
-            from src.data.fetcher import fetch_multiple_stocks
             stock_data = fetch_multiple_stocks(top_tickers, period="6mo")
 
         await send_scan_results(result, stock_data)
 
-        # Auto-open paper trades for top BUY signals
-        from src.trading.paper_trader import open_trade
-        top_buys = result.get("top_buys", [])
-        opened = 0
-        for signal in top_buys[:3]:  # Top 3 BUY signals
-            if signal.get("grade") in ("STRONG", "MODERATE"):
-                trade = open_trade(signal)
-                if trade:
-                    opened += 1
-        if opened > 0:
-            from src.notifications.telegram import send_message
-            await send_message(f"\U0001f4bc تم فتح {opened} صفقة افتراضية تلقائياً. اكتب /portfolio للتفاصيل.")
+        # Auto-buy STRONG signals only
+        await _auto_buy_strong_signals(result)
 
         # Check if naqi list needs updating
         from src.data.tickers import check_naqi_update_needed
@@ -59,45 +124,46 @@ async def morning_scan_job():
 
 
 async def intraday_scan_job():
-    """Run during market hours — check for new signals + paper positions."""
+    """Run during market hours — check positions + auto-buy new STRONG signals."""
     logger.info("Running intraday scan job...")
     try:
-        # Check paper trading positions
+        # 1. Check paper trading positions for SL/TP
         from src.trading.paper_trader import check_positions
         closed = check_positions()
         if closed:
             from src.notifications.telegram import send_message
             for trade in closed:
                 icon = "\U0001f7e2" if trade["final_pnl"] > 0 else "\U0001f534"
+                _record_sell(trade["ticker"])
                 await send_message(
-                    f"{icon} <b>صفقة افتراضية مغلقة:</b> {trade['ticker']}.SR\n"
+                    f"{icon} <b>صفقة افتراضية مغلقة:</b> {trade['ticker']}\n"
                     f"السبب: {trade['exit_reason']}\n"
                     f"P&L: {trade['final_pnl']:+,.0f} ريال ({trade['final_pnl_pct']:+.1f}%)"
                 )
 
+        # 2. Scan for new signals
         from src.analysis.screener import run_market_scan
-        from src.notifications.telegram import send_message
-
         result = run_market_scan(save_to_db=True)
 
-        # Only notify for very strong signals (>= 75)
-        strong_signals = [
-            s for s in result.get("all_signals", [])
-            if s["strength"] >= 75
-        ]
+        # 3. Auto-buy new STRONG signals (same rules as morning)
+        opened = await _auto_buy_strong_signals(result)
 
-        if strong_signals:
+        # 4. Notify about strong signals even if not bought (at max positions)
+        strong_buys = [s for s in result.get("all_signals", [])
+                       if s["strength"] >= 70 and s["signal_type"] == "BUY"]
+        strong_sells = [s for s in result.get("all_signals", [])
+                        if s["strength"] >= 70 and s["signal_type"] == "SELL"]
+
+        if strong_buys or strong_sells:
             from src.notifications.telegram import send_message
-            header = f"\u26a1 <b>Strong signals detected ({len(strong_signals)}):</b>\n\n"
-            for s in strong_signals[:5]:
+            msg = f"\u26a1 <b>إشارات قوية ({len(strong_buys)} شراء، {len(strong_sells)} بيع):</b>\n\n"
+            for s in (strong_buys + strong_sells)[:5]:
                 icon = "\U0001f7e2" if s["signal_type"] == "BUY" else "\U0001f534"
-                header += (
-                    f"{icon} <b>{s['ticker']}.SR</b> ({s.get('stock_name', '')}) "
-                    f"- {s['strength']}/100\n"
-                )
-            await send_message(header)
+                action = "شراء" if s["signal_type"] == "BUY" else "بيع"
+                msg += f"{icon} <b>{s['ticker']}</b> ({s.get('stock_name', '')}) — {action} [{s['strength']}/100]\n"
+            await send_message(msg)
 
-        logger.info(f"Intraday scan: {len(strong_signals)} strong signals")
+        logger.info(f"Intraday: {len(strong_buys)} strong buys, {opened} auto-bought")
 
     except Exception as e:
         logger.error(f"Intraday scan failed: {e}", exc_info=True)
