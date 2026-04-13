@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أسهم — لوحة التحكم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0a1628;
+            --bg-secondary: #111d33;
+            --bg-card: rgba(17, 29, 51, 0.7);
+            --bg-card-hover: rgba(22, 37, 65, 0.85);
+            --border: rgba(56, 189, 248, 0.08);
+            --border-hover: rgba(56, 189, 248, 0.15);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #10b981;
+            --accent-glow: rgba(16, 185, 129, 0.15);
+            --red: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.15);
+            --gold: #f59e0b;
+            --blue: #38bdf8;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ═══ Background Effects ═══ */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 20%, rgba(16, 185, 129, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(56, 189, 248, 0.03) 0%, transparent 50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ═══ Layout ═══ */
+        .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+        /* ═══ Sidebar ═══ */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #0d1f3c 0%, #0a1628 100%);
+            border-left: 1px solid var(--border);
+            padding: 28px 20px;
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-logo {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .sidebar-logo h1 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #10b981, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .sidebar-logo p {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+        .nav-item {
+            display: block;
+            padding: 12px 18px;
+            margin: 4px 0;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .nav-item:hover { background: rgba(56, 189, 248, 0.06); color: var(--text-primary); }
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(56, 189, 248, 0.08));
+            color: #10b981;
+            font-weight: 700;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+        }
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        .sidebar-footer p { color: var(--text-muted); font-size: 0.75rem; margin: 3px 0; }
+        .naqi-badge {
+            display: inline-block;
+            background: var(--accent-glow);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        /* ═══ Main Content ═══ */
+        .main { flex: 1; margin-right: 260px; padding: 28px 36px; }
+
+        /* ═══ Page Header ═══ */
+        .page-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .page-header h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+        .page-header .date {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        /* ═══ Cards Grid ═══ */
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 22px;
+            transition: all 0.25s;
+            text-align: center;
+        }
+        .card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .card-label { color: var(--text-muted); font-size: 0.78rem; font-weight: 500; margin-bottom: 8px; letter-spacing: 0.03em; }
+        .card-value { font-size: 1.7rem; font-weight: 800; color: var(--text-primary); }
+        .card-value.positive { color: var(--accent); }
+        .card-value.negative { color: var(--red); }
+        .card-delta { font-size: 0.82rem; margin-top: 4px; font-weight: 600; }
+        .card-delta.up { color: var(--accent); }
+        .card-delta.down { color: var(--red); }
+
+        /* ═══ Section ═══ */
+        .section {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 20px 0;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--blue);
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* ═══ Status Badge ═══ */
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 24px;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .status-healthy { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(16,185,129,0.2); }
+        .status-danger { background: var(--red-glow); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+        .status-caution { background: rgba(245,158,11,0.12); color: var(--gold); border: 1px solid rgba(245,158,11,0.2); }
+
+        /* ═══ Table ═══ */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: right;
+            padding: 10px 14px;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            letter-spacing: 0.03em;
+        }
+        td {
+            padding: 12px 14px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            color: var(--text-secondary);
+        }
+        tr:hover td { background: rgba(56, 189, 248, 0.03); }
+
+        /* ═══ Button ═══ */
+        .btn {
+            display: inline-block;
+            padding: 12px 32px;
+            border-radius: 12px;
+            border: none;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* ═══ Loading ═══ */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .spinner {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ═══ Empty State ═══ */
+        .empty {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* ═══ Tabs ═══ */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ═══ Input ═══ */
+        .input-group { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 16px 0; }
+        .input-field {
+            padding: 10px 18px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1.1rem;
+            width: 120px;
+            text-align: center;
+            direction: ltr;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus { outline: none; border-color: var(--accent); }
+
+        /* ═══ Responsive ═══ */
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main { margin-right: 0; padding: 16px; }
+            .cards { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-logo">
+                <h1>أسهم</h1>
+                <p>محلل السوق السعودي</p>
+            </div>
+            <a class="nav-item active" onclick="showTab('home')">الرئيسية</a>
+            <a class="nav-item" onclick="showTab('portfolio')">المحفظة</a>
+            <a class="nav-item" onclick="showTab('analyze')">تحليل سهم</a>
+            <a class="nav-item" onclick="showTab('system')">معلومات النظام</a>
+            <div class="sidebar-footer">
+                <span class="naqi-badge">✅ أسهم نقية فقط</span>
+                <p style="margin-top:10px">قائمة العصيمي</p>
+                <p>v1.0</p>
+            </div>
+        </nav>
+
+        <!-- Main -->
+        <main class="main">
+            <!-- HOME -->
+            <div id="tab-home" class="tab-content active">
+                <div class="page-header">
+                    <h2>لوحة التحكم</h2>
+                    <p class="date" id="today-date"></p>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">🏦 حالة السوق</div>
+                    <div class="cards" id="market-cards">
+                        <div class="loading"><div class="spinner"></div><p>جاري التحميل...</p></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">💼 المحفظة الافتراضية</div>
+                    <div class="cards" id="portfolio-cards">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                    <div id="positions-table"></div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">🔍 مسح السوق</div>
+                    <div style="text-align:center;margin:16px 0">
+                        <button class="btn btn-primary" onclick="runScan()">مسح الأسهم النقية الآن</button>
+                    </div>
+                    <div id="scan-results"></div>
+                </div>
+            </div>
+
+            <!-- PORTFOLIO -->
+            <div id="tab-portfolio" class="tab-content">
+                <div class="page-header"><h2>المحفظة والأداء</h2></div>
+                <div class="section">
+                    <div class="section-title">📊 الأداء العام</div>
+                    <div class="cards" id="perf-cards"></div>
+                </div>
+                <div class="section">
+                    <div class="section-title">📋 الصفقات المفتوحة</div>
+                    <div id="portfolio-positions"></div>
+                </div>
+            </div>
+
+            <!-- ANALYZE -->
+            <div id="tab-analyze" class="tab-content">
+                <div class="page-header"><h2>تحليل سهم</h2></div>
+                <div class="section">
+                    <div class="input-group">
+                        <input type="text" class="input-field" id="ticker-input" value="2222" maxlength="4" placeholder="رمز السهم">
+                        <button class="btn btn-primary" onclick="analyzeStock()">تحليل</button>
+                    </div>
+                    <div id="stock-result"></div>
+                </div>
+            </div>
+
+            <!-- SYSTEM -->
+            <div id="tab-system" class="tab-content">
+                <div class="page-header"><h2>معلومات النظام</h2></div>
+                <div class="section">
+                    <div class="section-title">🤖 مكونات النظام</div>
+                    <div class="table-wrap">
+                        <table>
+                            <tr><th>المكون</th><th>الحالة</th><th>الوصف</th></tr>
+                            <tr><td>التحليل الفني</td><td style="color:var(--accent)">● يعمل</td><td>RSI, MACD, Bollinger, SMA, EMA</td></tr>
+                            <tr><td>حالة السوق</td><td style="color:var(--accent)">● يعمل</td><td>كشف انهيارات TASI تلقائياً</td></tr>
+                            <tr><td>قوة القطاعات</td><td style="color:var(--accent)">● يعمل</td><td>تصنيف القطاعات حسب الأداء</td></tr>
+                            <tr><td>تحليل الأخبار</td><td style="color:var(--accent)">● يعمل</td><td>Argaam RSS + Gemini AI</td></tr>
+                            <tr><td>التداول الافتراضي</td><td style="color:var(--accent)">● يعمل</td><td>100,000 ريال افتراضي</td></tr>
+                            <tr><td>بوت تيليجرام</td><td style="color:var(--accent)">● يعمل</td><td>@ashum_market_bot</td></tr>
+                            <tr><td>التداول الحقيقي</td><td style="color:var(--gold)">◐ قريباً</td><td>المرحلة 4</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">📅 جدول المسح التلقائي</div>
+                    <div class="table-wrap">
+                        <table>
+                            <tr><th>الوقت</th><th>المهمة</th></tr>
+                            <tr><td>10:15 ص</td><td>مسح الصباح + فتح صفقات افتراضية</td></tr>
+                            <tr><td>كل 30 دقيقة</td><td>فحص الصفقات (وقف خسارة / هدف)</td></tr>
+                            <tr><td>3:15 م</td><td>ملخص نهاية اليوم</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Date
+        document.getElementById('today-date').textContent = new Date().toLocaleDateString('ar-SA', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        // Navigation
+        function showTab(name) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            event.target.classList.add('active');
+
+            if (name === 'portfolio') loadPortfolioPage();
+        }
+
+        // Load market data
+        async function loadMarket() {
+            try {
+                const res = await fetch('/api/market');
+                const data = await res.json();
+                const statusMap = {HEALTHY: ['صحي ✓', 'status-healthy'], CAUTION: ['حذر ⚠', 'status-caution'], DANGER: ['خطر ✕', 'status-danger'], OVERSOLD: ['تشبع بيعي', 'status-healthy']};
+                const [label, cls] = statusMap[data.status] || ['—', ''];
+
+                document.getElementById('market-cards').innerHTML = `
+                    <div class="card"><div class="card-label">حالة السوق</div><div><span class="${cls} status-badge">${label}</span></div></div>
+                    <div class="card"><div class="card-label">مؤشر TASI</div><div class="card-value">${Number(data.tasi_price).toLocaleString()}</div></div>
+                    <div class="card"><div class="card-label">تغير 5 أيام</div><div class="card-value ${data.tasi_change_5d >= 0 ? 'positive' : 'negative'}">${data.tasi_change_5d >= 0 ? '+' : ''}${data.tasi_change_5d.toFixed(1)}%</div></div>
+                    <div class="card"><div class="card-label">RSI</div><div class="card-value">${data.tasi_rsi.toFixed(0)}</div></div>
+                `;
+            } catch(e) { document.getElementById('market-cards').innerHTML = '<p class="empty">لا يمكن تحميل البيانات</p>'; }
+        }
+
+        // Load portfolio
+        async function loadPortfolio() {
+            try {
+                const res = await fetch('/api/portfolio');
+                const {portfolio, performance} = await res.json();
+                const pnl = portfolio.total_unrealized_pnl;
+                const pnlClass = pnl >= 0 ? 'positive' : 'negative';
+
+                document.getElementById('portfolio-cards').innerHTML = `
+                    <div class="card"><div class="card-label">رأس المال</div><div class="card-value">${Number(portfolio.capital).toLocaleString()}</div><div class="card-label">ريال</div></div>
+                    <div class="card"><div class="card-label">قيمة المحفظة</div><div class="card-value">${Number(portfolio.portfolio_value).toLocaleString()}</div><div class="card-label">ريال</div></div>
+                    <div class="card"><div class="card-label">الربح/الخسارة</div><div class="card-value ${pnlClass}">${pnl >= 0 ? '+' : ''}${Number(pnl).toLocaleString()}</div><div class="card-label">ريال</div></div>
+                    <div class="card"><div class="card-label">نسبة الفوز</div><div class="card-value">${performance.win_rate}%</div></div>
+                `;
+
+                if (portfolio.open_positions.length > 0) {
+                    let rows = portfolio.open_positions.map(p => {
+                        const pnlCls = (p.current_pnl || 0) >= 0 ? 'positive' : 'negative';
+                        return `<tr>
+                            <td><strong>${p.ticker}.SR</strong></td>
+                            <td>${p.stock_name}</td>
+                            <td>${p.entry_price.toFixed(2)}</td>
+                            <td>${(p.current_price || p.entry_price).toFixed(2)}</td>
+                            <td style="color:var(--${(p.current_pnl||0) >= 0 ? 'accent' : 'red'})">${(p.current_pnl||0) >= 0 ? '+' : ''}${Number(p.current_pnl||0).toLocaleString()} ريال</td>
+                            <td style="color:var(--${(p.current_pnl_pct||0) >= 0 ? 'accent' : 'red'})">${(p.current_pnl_pct||0).toFixed(1)}%</td>
+                        </tr>`;
+                    }).join('');
+                    document.getElementById('positions-table').innerHTML = `
+                        <div style="margin-top:20px"><div class="table-wrap"><table>
+                            <tr><th>السهم</th><th>الاسم</th><th>الدخول</th><th>الحالي</th><th>الربح/الخسارة</th><th>النسبة</th></tr>
+                            ${rows}
+                        </table></div></div>`;
+                } else {
+                    document.getElementById('positions-table').innerHTML = '<p class="empty">💤 لا توجد صفقات مفتوحة — البوت سيفتح صفقات تلقائياً مع مسح الصباح</p>';
+                }
+            } catch(e) { document.getElementById('portfolio-cards').innerHTML = '<p class="empty">لا يمكن تحميل المحفظة</p>'; }
+        }
+
+        // Portfolio page
+        async function loadPortfolioPage() {
+            try {
+                const res = await fetch('/api/portfolio');
+                const {portfolio, performance} = await res.json();
+
+                document.getElementById('perf-cards').innerHTML = `
+                    <div class="card"><div class="card-label">إجمالي الصفقات</div><div class="card-value">${performance.total_trades}</div></div>
+                    <div class="card"><div class="card-label">نسبة الفوز</div><div class="card-value">${performance.win_rate}%</div></div>
+                    <div class="card"><div class="card-label">الربح/الخسارة</div><div class="card-value ${performance.total_pnl >= 0 ? 'positive' : 'negative'}">${performance.total_pnl >= 0 ? '+' : ''}${Number(performance.total_pnl).toLocaleString()}</div><div class="card-label">ريال</div></div>
+                    <div class="card"><div class="card-label">رأس المال</div><div class="card-value">${Number(performance.capital).toLocaleString()}</div><div class="card-label">ريال</div></div>
+                    <div class="card"><div class="card-label">صفقات رابحة</div><div class="card-value positive">${performance.wins}</div></div>
+                    <div class="card"><div class="card-label">صفقات خاسرة</div><div class="card-value negative">${performance.losses}</div></div>
+                `;
+
+                if (portfolio.open_positions.length > 0) {
+                    let rows = portfolio.open_positions.map(p => `<tr>
+                        <td><strong>${p.ticker}.SR</strong></td><td>${p.stock_name}</td>
+                        <td>${p.entry_price.toFixed(2)}</td><td>${(p.current_price||p.entry_price).toFixed(2)}</td>
+                        <td style="color:var(--${(p.current_pnl||0)>=0?'accent':'red'})">${(p.current_pnl||0)>=0?'+':''}${Number(p.current_pnl||0).toLocaleString()}</td>
+                        <td>${p.stop_loss.toFixed(2)}</td><td>${p.take_profit.toFixed(2)}</td>
+                    </tr>`).join('');
+                    document.getElementById('portfolio-positions').innerHTML = `<div class="table-wrap"><table>
+                        <tr><th>السهم</th><th>الاسم</th><th>الدخول</th><th>الحالي</th><th>P&L</th><th>وقف</th><th>هدف</th></tr>${rows}</table></div>`;
+                } else {
+                    document.getElementById('portfolio-positions').innerHTML = '<p class="empty">💤 لا توجد صفقات مفتوحة</p>';
+                }
+            } catch(e) {}
+        }
+
+        // Scan
+        async function runScan() {
+            document.getElementById('scan-results').innerHTML = '<div class="loading"><div class="spinner"></div><p>جاري مسح 198 سهم نقي...</p></div>';
+            try {
+                const res = await fetch('/api/scan');
+                const data = await res.json();
+
+                let html = `<div class="cards" style="margin:16px 0">
+                    <div class="card"><div class="card-label">الأسهم المفحوصة</div><div class="card-value">${data.stats.total_scanned}</div></div>
+                    <div class="card"><div class="card-label">إشارات شراء</div><div class="card-value positive">${data.stats.buy_signals}</div></div>
+                    <div class="card"><div class="card-label">إشارات بيع</div><div class="card-value negative">${data.stats.sell_signals}</div></div>
+                </div>`;
+
+                if (data.top_buys.length) {
+                    html += '<h3 style="color:var(--accent);margin:20px 0 10px">🟢 أقوى إشارات الشراء</h3><div class="table-wrap"><table><tr><th>السهم</th><th>الاسم</th><th>السعر</th><th>القوة</th><th>الدرجة</th><th>وقف</th><th>هدف</th></tr>';
+                    data.top_buys.forEach(s => {
+                        const gradeAr = {STRONG:'قوية 🟢',MODERATE:'متوسطة 🟡',WEAK:'ضعيفة 🟠'}[s.grade]||'';
+                        html += `<tr><td><strong>${s.ticker}.SR</strong></td><td>${s.stock_name||''}</td><td>${(s.price||0).toFixed(2)}</td><td>${s.strength}/100</td><td>${gradeAr}</td><td>${(s.stop_loss||0).toFixed(2)}</td><td>${(s.take_profit||0).toFixed(2)}</td></tr>`;
+                    });
+                    html += '</table></div>';
+                }
+
+                if (data.top_sells.length) {
+                    html += '<h3 style="color:var(--red);margin:20px 0 10px">🔴 أقوى إشارات البيع</h3><div class="table-wrap"><table><tr><th>السهم</th><th>الاسم</th><th>السعر</th><th>القوة</th><th>الدرجة</th></tr>';
+                    data.top_sells.forEach(s => {
+                        const gradeAr = {STRONG:'قوية 🔴',MODERATE:'متوسطة 🟡',WEAK:'ضعيفة 🟠'}[s.grade]||'';
+                        html += `<tr><td><strong>${s.ticker}.SR</strong></td><td>${s.stock_name||''}</td><td>${(s.price||0).toFixed(2)}</td><td>${s.strength}/100</td><td>${gradeAr}</td></tr>`;
+                    });
+                    html += '</table></div>';
+                }
+
+                document.getElementById('scan-results').innerHTML = html;
+            } catch(e) { document.getElementById('scan-results').innerHTML = '<p class="empty">حدث خطأ</p>'; }
+        }
+
+        // Analyze stock
+        async function analyzeStock() {
+            const ticker = document.getElementById('ticker-input').value;
+            document.getElementById('stock-result').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            try {
+                const res = await fetch('/api/stock/' + ticker);
+                const data = await res.json();
+                if (data.error) { document.getElementById('stock-result').innerHTML = '<p class="empty">لا توجد بيانات</p>'; return; }
+
+                const naqi = data.naqi ? '<span class="naqi-badge">✅ نقي</span>' : '<span style="color:var(--red)">❌ غير نقي</span>';
+                let html = `<div style="text-align:center;margin:20px 0"><h3>${ticker}.SR — ${data.info.name}</h3><p style="color:var(--text-muted)">القطاع: ${data.info.sector} | ${naqi}</p></div>`;
+
+                if (data.indicators) {
+                    const ind = data.indicators;
+                    html += `<div class="cards">
+                        <div class="card"><div class="card-label">السعر</div><div class="card-value">${(ind.close||0).toFixed(2)}</div></div>
+                        <div class="card"><div class="card-label">RSI</div><div class="card-value">${(ind.RSI_14||0).toFixed(1)}</div></div>
+                        <div class="card"><div class="card-label">SMA 50</div><div class="card-value">${(ind.SMA_50||0).toFixed(2)}</div></div>
+                        <div class="card"><div class="card-label">SMA 200</div><div class="card-value">${(ind.SMA_200||0).toFixed(2)}</div></div>
+                    </div>`;
+                }
+
+                if (data.signal) {
+                    const s = data.signal;
+                    const typeAr = s.signal_type === 'BUY' ? 'شراء 🟢' : 'بيع 🔴';
+                    const gradeAr = {STRONG:'قوية',MODERATE:'متوسطة',WEAK:'ضعيفة'}[s.grade]||'';
+                    const color = s.signal_type === 'BUY' ? 'var(--accent)' : 'var(--red)';
+                    html += `<div style="text-align:center;margin:20px 0;padding:16px;border:1px solid ${color};border-radius:12px;background:rgba(16,185,129,0.05)">
+                        <h3 style="color:${color}">إشارة ${typeAr} — ${gradeAr} (${s.strength}/100)</h3>
+                        <div class="cards" style="margin:12px 0">
+                            <div class="card"><div class="card-label">وقف الخسارة</div><div class="card-value">${(s.stop_loss||0).toFixed(2)}</div></div>
+                            <div class="card"><div class="card-label">الهدف</div><div class="card-value">${(s.take_profit||0).toFixed(2)}</div></div>
+                        </div>
+                        <div style="text-align:right;padding:8px 16px">${(s.reasons||[]).map(r=>'<p style="margin:4px 0;color:var(--text-secondary)">• '+r+'</p>').join('')}</div>
+                    </div>`;
+                } else {
+                    html += '<p class="empty" style="margin:20px 0">🟡 لا توجد إشارة قوية حالياً</p>';
+                }
+
+                document.getElementById('stock-result').innerHTML = html;
+            } catch(e) { document.getElementById('stock-result').innerHTML = '<p class="empty">حدث خطأ</p>'; }
+        }
+
+        // Init
+        loadMarket();
+        loadPortfolio();
+    </script>
+</body>
+</html>
