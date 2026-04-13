@@ -119,7 +119,50 @@ def fetch_tasi_index(period: str = HISTORY_PERIOD) -> pd.DataFrame:
 
 
 def get_latest_price(ticker: str) -> dict | None:
-    """Get the latest price info for a stock."""
+    """
+    Get real-time price for a stock using Yahoo Finance chart API.
+    This returns near real-time data (not delayed like yfinance library).
+    """
+    import requests
+
+    yf_t = get_yf_ticker(ticker)
+    try:
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{yf_t}?interval=1m&range=1d"
+        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
+
+        if resp.status_code == 200:
+            data = resp.json()
+            meta = data.get("chart", {}).get("result", [{}])[0].get("meta", {})
+            price = meta.get("regularMarketPrice")
+            prev_close = meta.get("previousClose")
+
+            if price and prev_close:
+                change = price - prev_close
+                change_pct = (change / prev_close) * 100
+            else:
+                change = 0
+                change_pct = 0
+
+            return {
+                "price": price,
+                "previous_close": prev_close,
+                "change": round(change, 2),
+                "change_pct": round(change_pct, 2),
+                "volume": meta.get("regularMarketVolume"),
+                "market_cap": None,
+            }
+
+        # Fallback to yfinance if Yahoo chart API fails
+        logger.warning(f"Yahoo chart API returned {resp.status_code} for {ticker}, falling back")
+        return _get_price_yfinance(ticker)
+
+    except Exception as e:
+        logger.error(f"Real-time price failed for {ticker}: {e}")
+        return _get_price_yfinance(ticker)
+
+
+def _get_price_yfinance(ticker: str) -> dict | None:
+    """Fallback: get price from yfinance (delayed)."""
     yf_t = get_yf_ticker(ticker)
     try:
         stock = yf.Ticker(yf_t)
@@ -132,5 +175,5 @@ def get_latest_price(ticker: str) -> dict | None:
             "market_cap": info.get("marketCap"),
         }
     except Exception as e:
-        logger.error(f"Error getting latest price for {ticker}: {e}")
+        logger.error(f"yfinance fallback failed for {ticker}: {e}")
         return None
