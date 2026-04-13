@@ -23,18 +23,116 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for RTL and dark theme
+# Professional RTL Arabic theme
 st.markdown("""
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-    .main-header {font-size: 2rem; font-weight: bold; color: #00c853;}
-    .metric-card {
-        background: #1a1a2e;
-        border-radius: 10px;
-        padding: 15px;
-        border: 1px solid #0f3460;
+    /* RTL + Arabic Font */
+    html, body, [class*="css"] {
+        direction: rtl !important;
+        text-align: right !important;
+        font-family: 'Tajawal', sans-serif !important;
     }
-    .buy-signal {color: #00c853;}
-    .sell-signal {color: #ff1744;}
+
+    /* Main area */
+    .main .block-container {
+        direction: rtl !important;
+        padding-top: 2rem;
+    }
+
+    /* Sidebar RTL */
+    [data-testid="stSidebar"] {
+        direction: rtl !important;
+        text-align: right !important;
+    }
+    [data-testid="stSidebar"] .stRadio > div {
+        direction: rtl !important;
+    }
+
+    /* Metric cards styling */
+    [data-testid="stMetric"] {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 16px;
+        direction: rtl !important;
+        text-align: center !important;
+    }
+    [data-testid="stMetric"] label {
+        color: #94a3b8 !important;
+        font-size: 0.85rem !important;
+    }
+    [data-testid="stMetric"] [data-testid="stMetricValue"] {
+        color: #f1f5f9 !important;
+        font-weight: 700 !important;
+        font-size: 1.5rem !important;
+    }
+    [data-testid="stMetric"] [data-testid="stMetricDelta"] {
+        direction: ltr !important;
+    }
+
+    /* Headers */
+    h1, h2, h3, h4 {
+        font-family: 'Tajawal', sans-serif !important;
+        font-weight: 800 !important;
+    }
+    h2 { color: #38bdf8 !important; }
+    h3 { color: #e2e8f0 !important; }
+
+    /* Tables */
+    .stDataFrame {
+        direction: rtl !important;
+    }
+    [data-testid="stDataFrame"] th {
+        text-align: right !important;
+        background-color: #1e293b !important;
+        color: #94a3b8 !important;
+    }
+
+    /* Buttons */
+    .stButton > button {
+        font-family: 'Tajawal', sans-serif !important;
+        font-weight: 700 !important;
+        border-radius: 8px;
+        padding: 0.5rem 2rem;
+    }
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #059669, #10b981) !important;
+        border: none !important;
+    }
+
+    /* Info/Warning boxes */
+    .stAlert {
+        direction: rtl !important;
+        text-align: right !important;
+        border-radius: 8px;
+    }
+
+    /* Container borders */
+    [data-testid="stVerticalBlock"] > div:has(> [data-testid="stContainer"]) {
+        border-radius: 12px;
+    }
+
+    /* Input fields RTL */
+    .stTextInput input {
+        direction: ltr !important;
+        text-align: left !important;
+    }
+
+    /* Positive/Negative colors */
+    .profit { color: #10b981 !important; font-weight: 700; }
+    .loss { color: #ef4444 !important; font-weight: 700; }
+
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    /* Custom divider */
+    hr {
+        border-color: #334155 !important;
+        margin: 1.5rem 0 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
