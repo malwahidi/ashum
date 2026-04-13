@@ -473,7 +473,8 @@
         async function loadPortfolioPage() {
             try {
                 const res = await fetch('/api/portfolio');
-                const {portfolio, performance} = await res.json();
+                const data = await res.json();
+                const {portfolio, performance} = data;
 
                 document.getElementById('perf-cards').innerHTML = `
                     <div class="card"><div class="card-label">إجمالي الصفقات</div><div class="card-value">${performance.total_trades}</div></div>
