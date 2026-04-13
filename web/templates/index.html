@@ -498,6 +498,32 @@
                 } else {
                     document.getElementById('portfolio-positions').innerHTML = '<p class="empty">💤 لا توجد صفقات مفتوحة</p>';
                 }
+
+                // Closed trades history
+                const closed = data.closed_trades || [];
+                if (closed.length > 0) {
+                    let closedRows = closed.reverse().map(t => {
+                        const pnlColor = t.final_pnl >= 0 ? 'accent' : 'red';
+                        return `<tr>
+                            <td><strong>${t.ticker}</strong></td>
+                            <td>${t.stock_name}</td>
+                            <td>${(t.entry_price||0).toFixed(2)}</td>
+                            <td>${(t.exit_price||0).toFixed(2)}</td>
+                            <td>${t.exit_reason||''}</td>
+                            <td style="color:var(--${pnlColor})">${t.final_pnl>=0?'+':''}${Number(t.final_pnl||0).toLocaleString()} ريال</td>
+                            <td style="color:var(--${pnlColor})">${(t.final_pnl_pct||0).toFixed(1)}%</td>
+                            <td>${t.days_held||0} يوم</td>
+                        </tr>`;
+                    }).join('');
+                    document.getElementById('portfolio-positions').innerHTML += `
+                        <div style="margin-top:30px">
+                            <div class="section-title">📜 سجل الصفقات المغلقة</div>
+                            <div class="table-wrap"><table>
+                                <tr><th>السهم</th><th>الاسم</th><th>الدخول</th><th>الخروج</th><th>السبب</th><th>الربح/الخسارة</th><th>النسبة</th><th>المدة</th></tr>
+                                ${closedRows}
+                            </table></div>
+                        </div>`;
+                }
             } catch(e) {}
         }
 

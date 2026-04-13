@@ -42,16 +42,22 @@ def api_market():
 @app.route("/api/portfolio")
 def api_portfolio():
     try:
-        from src.trading.paper_trader import get_portfolio, get_performance
+        from src.trading.paper_trader import get_portfolio, get_performance, _load_data
         from src.data.tickers import get_display_name
         portfolio = get_portfolio()
         perf = get_performance()
+        data = _load_data()
 
         # Add Arabic names to positions
         for pos in portfolio.get("open_positions", []):
             pos["stock_name"] = get_display_name(pos["ticker"])
 
-        return jsonify({"portfolio": portfolio, "performance": perf})
+        # Add Arabic names to closed trades
+        closed = data.get("closed_trades", [])
+        for t in closed:
+            t["stock_name"] = get_display_name(t["ticker"])
+
+        return jsonify({"portfolio": portfolio, "performance": perf, "closed_trades": closed})
     except Exception as e:
         # Return empty portfolio instead of error
         return jsonify({
