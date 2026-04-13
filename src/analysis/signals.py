@@ -258,7 +258,7 @@ def generate_signal(ticker: str, df: pd.DataFrame) -> dict | None:
         risk = calculate_stop_loss(close, "BUY")
         return {
             "ticker": ticker,
-            "stock_name": stock_info.get("name", ticker),
+            "stock_name": stock_info.get("name_ar", stock_info.get("name", ticker)),
             "sector": stock_info.get("sector", "Unknown"),
             "date": date.today(),
             "signal_type": "BUY",
@@ -276,7 +276,7 @@ def generate_signal(ticker: str, df: pd.DataFrame) -> dict | None:
         risk = calculate_stop_loss(close, "SELL")
         return {
             "ticker": ticker,
-            "stock_name": stock_info.get("name", ticker),
+            "stock_name": stock_info.get("name_ar", stock_info.get("name", ticker)),
             "sector": stock_info.get("sector", "Unknown"),
             "date": date.today(),
             "signal_type": "SELL",

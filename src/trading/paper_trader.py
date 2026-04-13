@@ -251,7 +251,7 @@ def format_portfolio_arabic() -> str:
             icon = "\U0001f7e2" if pnl >= 0 else "\U0001f534"
 
             msg += (
-                f"{icon} <b>{pos['ticker']}.SR</b> ({pos['stock_name']})\n"
+                f"{icon} <b>{pos['ticker']}</b> ({pos['stock_name']})\n"
                 f"  {pos['signal_type']} | دخول: {pos['entry_price']:.2f}\n"
                 f"  الحالي: {pos.get('current_price', pos['entry_price']):.2f} | "
                 f"P&L: {pnl:+,.0f} ({pnl_pct:+.1f}%)\n"
@@ -296,9 +296,9 @@ def format_performance_arabic() -> str:
     best = perf.get("best_trade")
     worst = perf.get("worst_trade")
     if best:
-        msg += f"\U0001f947 أفضل صفقة: {best['ticker']}.SR ({best['final_pnl']:+,.0f} ريال)\n"
+        msg += f"\U0001f947 أفضل صفقة: {best['ticker']} ({best['final_pnl']:+,.0f} ريال)\n"
     if worst:
-        msg += f"\U0001f4a5 أسوأ صفقة: {worst['ticker']}.SR ({worst['final_pnl']:+,.0f} ريال)\n"
+        msg += f"\U0001f4a5 أسوأ صفقة: {worst['ticker']} ({worst['final_pnl']:+,.0f} ريال)\n"
 
     msg += (
         f"\n\U0001f4bc صفقات مفتوحة: {perf['open_positions']}\n\n"

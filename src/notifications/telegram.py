@@ -55,7 +55,7 @@ def format_signal_message(signal: dict) -> str:
     rsi_display = f"{rsi_val:.1f}" if isinstance(rsi_val, (int, float)) else rsi_val
 
     msg = (
-        f"{action_icon} <b>إشارة {action}: {signal['ticker']}.SR</b>\n"
+        f"{action_icon} <b>إشارة {action}: {signal['ticker']}</b>\n"
         f"<b>{signal.get('stock_name', signal['ticker'])}</b> | {signal.get('sector', '')}\n"
         f"\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"
         f"{grade_icon} الدرجة: <b>{grade_text}</b> ({signal['strength']}/100)\n"
@@ -111,7 +111,7 @@ def format_stock_info(ticker: str, indicators: dict, stock_info: dict) -> str:
     sector = stock_info.get("sector", "")
 
     msg = (
-        f"\U0001f4ca <b>{ticker}.SR - {name}</b>\n"
+        f"\U0001f4ca <b>{ticker} - {name}</b>\n"
         f"القطاع: {sector}\n"
         f"\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n"
         f"\U0001f4b0 السعر: <b>{close:.2f} ريال</b>\n"
@@ -169,7 +169,7 @@ def format_scan_summary(scan_result: dict) -> str:
             grade_icon = "\U0001f7e2" if grade == "STRONG" else "\U0001f7e1" if grade == "MODERATE" else "\U0001f7e0"
             grade_ar = "قوية" if grade == "STRONG" else "متوسطة" if grade == "MODERATE" else "ضعيفة"
             msg += (
-                f"  {i}. {grade_icon} <b>{s['ticker']}.SR</b> ({s.get('stock_name', '')})\n"
+                f"  {i}. {grade_icon} <b>{s['ticker']}</b> ({s.get('stock_name', '')})\n"
                 f"     {s.get('price', 0):.2f} ريال | {grade_ar} [{s['strength']}/100]\n"
                 f"     وقف: {s.get('stop_loss', 0):.2f} | هدف: {s.get('take_profit', 0):.2f}\n\n"
             )
@@ -181,7 +181,7 @@ def format_scan_summary(scan_result: dict) -> str:
             grade_icon = "\U0001f534" if grade == "STRONG" else "\U0001f7e1" if grade == "MODERATE" else "\U0001f7e0"
             grade_ar = "قوية" if grade == "STRONG" else "متوسطة" if grade == "MODERATE" else "ضعيفة"
             msg += (
-                f"  {i}. {grade_icon} <b>{s['ticker']}.SR</b> ({s.get('stock_name', '')})\n"
+                f"  {i}. {grade_icon} <b>{s['ticker']}</b> ({s.get('stock_name', '')})\n"
                 f"     {s.get('price', 0):.2f} ريال | {grade_ar} [{s['strength']}/100]\n\n"
             )
 
@@ -244,7 +244,7 @@ async def send_signal_with_chart(
                 await bot.send_photo(
                     chat_id=target,
                     photo=chart_buf,
-                    caption=f"{signal['ticker']}.SR - {signal.get('stock_name', '')}",
+                    caption=f"{signal['ticker']} - {signal.get('stock_name', '')}",
                 )
 
     except Exception as e:
@@ -316,14 +316,14 @@ async def cmd_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     ticker = context.args[0].replace(".SR", "")
-    await update.message.reply_text(f"\U0001f4ca جاري تحليل {ticker}.SR...")
+    await update.message.reply_text(f"\U0001f4ca جاري تحليل {ticker}...")
 
     from src.data.fetcher import fetch_stock_history
     from src.analysis.signals import generate_signal
 
     df = fetch_stock_history(ticker, period="1y")
     if df.empty or len(df) < 200:
-        await update.message.reply_text(f"لا توجد بيانات كافية لـ {ticker}.SR. نحتاج 200 يوم تداول على الأقل.")
+        await update.message.reply_text(f"لا توجد بيانات كافية لـ {ticker}. نحتاج 200 يوم تداول على الأقل.")
         return
 
     stock_info = get_stock_info(ticker) or {"name": ticker, "sector": "غير محدد"}
@@ -364,7 +364,7 @@ async def cmd_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if chart_buf:
             await update.message.reply_photo(
                 photo=chart_buf,
-                caption=f"{ticker}.SR - {stock_info.get('name', ticker)}",
+                caption=f"{ticker} - {stock_info.get('name', ticker)}",
             )
     except Exception as e:
         logger.error(f"Error generating chart for {ticker}: {e}")
@@ -427,7 +427,7 @@ async def cmd_backtest(update: Update, context: ContextTypes.DEFAULT_TYPE):
         info = get_stock_info(ticker)
         name = info["name"] if info else ticker
         await update.message.reply_text(
-            f"\U0001f52c جاري اختبار الاستراتيجية على {ticker}.SR ({name})...\n"
+            f"\U0001f52c جاري اختبار الاستراتيجية على {ticker} ({name})...\n"
             f"هذا قد يستغرق 1-3 دقائق."
         )
         tickers = [ticker]
