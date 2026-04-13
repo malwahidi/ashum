@@ -741,6 +741,49 @@ ARABIC_NAMES = {
 }
 
 
+def refresh_arabic_names():
+    """
+    Fetch latest Arabic company names from Argaam.com.
+    Updates ARABIC_NAMES dict with any new companies.
+    Falls back to hardcoded names if Argaam is down.
+    """
+    import requests
+    import re
+
+    global ARABIC_NAMES
+
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        resp = requests.get(
+            "https://www.argaam.com/ar/company/companies-prices/3",
+            headers=headers, timeout=15
+        )
+        if resp.status_code == 200:
+            matches = re.findall(
+                r'relf-Stocksymbol="(\d+)"[^>]*relf-companyName="([^"]+)"',
+                resp.text
+            )
+            if matches:
+                new_names = {}
+                for symbol, name in matches:
+                    if symbol not in new_names:
+                        new_names[symbol] = name
+
+                # Update the global dict (add new, update existing)
+                ARABIC_NAMES.update(new_names)
+                logging.getLogger(__name__).info(
+                    f"Refreshed Arabic names from Argaam: {len(new_names)} companies"
+                )
+                return True
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Could not refresh Arabic names: {e}")
+
+    return False
+
+
+import logging
+
+
 def get_yf_ticker(ticker: str) -> str:
     """Convert Tadawul ticker to yfinance format."""
     return f"{ticker}.SR"

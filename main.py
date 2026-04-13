@@ -50,6 +50,14 @@ async def main():
         logger.error(f"Database connection failed: {e}")
         logger.info("Continuing without database (signals won't be persisted).")
 
+    # Refresh Arabic company names from Argaam
+    logger.info("Refreshing Arabic company names...")
+    from src.data.tickers import refresh_arabic_names
+    if refresh_arabic_names():
+        logger.info("Arabic names updated from Argaam.")
+    else:
+        logger.info("Using cached Arabic names.")
+
     # Start scheduler
     scheduler = create_scheduler()
     scheduler.start()

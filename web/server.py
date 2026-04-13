@@ -14,6 +14,10 @@ from datetime import date
 
 app = Flask(__name__, template_folder="templates")
 
+# Refresh Arabic names on startup
+from src.data.tickers import refresh_arabic_names
+refresh_arabic_names()
+
 
 @app.route("/")
 def index():
