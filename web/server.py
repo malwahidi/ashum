@@ -43,8 +43,14 @@ def api_market():
 def api_portfolio():
     try:
         from src.trading.paper_trader import get_portfolio, get_performance
+        from src.data.tickers import get_display_name
         portfolio = get_portfolio()
         perf = get_performance()
+
+        # Add Arabic names to positions
+        for pos in portfolio.get("open_positions", []):
+            pos["stock_name"] = get_display_name(pos["ticker"])
+
         return jsonify({"portfolio": portfolio, "performance": perf})
     except Exception as e:
         # Return empty portfolio instead of error

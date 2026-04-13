@@ -478,10 +478,10 @@
                 document.getElementById('perf-cards').innerHTML = `
                     <div class="card"><div class="card-label">إجمالي الصفقات</div><div class="card-value">${performance.total_trades}</div></div>
                     <div class="card"><div class="card-label">نسبة الفوز</div><div class="card-value">${performance.win_rate}%</div></div>
-                    <div class="card"><div class="card-label">الربح/الخسارة</div><div class="card-value ${performance.total_pnl >= 0 ? 'positive' : 'negative'}">${performance.total_pnl >= 0 ? '+' : ''}${Number(performance.total_pnl).toLocaleString()}</div><div class="card-label">ريال</div></div>
-                    <div class="card"><div class="card-label">رأس المال</div><div class="card-value">${Number(performance.capital).toLocaleString()}</div><div class="card-label">ريال</div></div>
                     <div class="card"><div class="card-label">صفقات رابحة</div><div class="card-value positive">${performance.wins}</div></div>
                     <div class="card"><div class="card-label">صفقات خاسرة</div><div class="card-value negative">${performance.losses}</div></div>
+                    <div class="card"><div class="card-label">الربح/الخسارة</div><div class="card-value ${performance.total_pnl >= 0 ? 'positive' : 'negative'}">${performance.total_pnl >= 0 ? '+' : ''}${Number(performance.total_pnl).toLocaleString()}</div><div class="card-label">ريال</div></div>
+                    <div class="card"><div class="card-label">رأس المال</div><div class="card-value">${Number(performance.capital).toLocaleString()}</div><div class="card-label">ريال</div></div>
                 `;
 
                 if (portfolio.open_positions.length > 0) {
