@@ -450,7 +450,7 @@
                     let rows = portfolio.open_positions.map(p => {
                         const pnlCls = (p.current_pnl || 0) >= 0 ? 'positive' : 'negative';
                         return `<tr>
-                            <td><strong>${p.ticker}.SR</strong></td>
+                            <td><strong>${p.ticker}</strong></td>
                             <td>${p.stock_name}</td>
                             <td>${p.entry_price.toFixed(2)}</td>
                             <td>${(p.current_price || p.entry_price).toFixed(2)}</td>
@@ -486,7 +486,7 @@
 
                 if (portfolio.open_positions.length > 0) {
                     let rows = portfolio.open_positions.map(p => `<tr>
-                        <td><strong>${p.ticker}.SR</strong></td><td>${p.stock_name}</td>
+                        <td><strong>${p.ticker}</strong></td><td>${p.stock_name}</td>
                         <td>${p.entry_price.toFixed(2)}</td><td>${(p.current_price||p.entry_price).toFixed(2)}</td>
                         <td style="color:var(--${(p.current_pnl||0)>=0?'accent':'red'})">${(p.current_pnl||0)>=0?'+':''}${Number(p.current_pnl||0).toLocaleString()}</td>
                         <td>${p.stop_loss.toFixed(2)}</td><td>${p.take_profit.toFixed(2)}</td>
@@ -516,7 +516,7 @@
                     html += '<h3 style="color:var(--accent);margin:20px 0 10px">🟢 أقوى إشارات الشراء</h3><div class="table-wrap"><table><tr><th>السهم</th><th>الاسم</th><th>السعر</th><th>القوة</th><th>الدرجة</th><th>وقف</th><th>هدف</th></tr>';
                     data.top_buys.forEach(s => {
                         const gradeAr = {STRONG:'قوية 🟢',MODERATE:'متوسطة 🟡',WEAK:'ضعيفة 🟠'}[s.grade]||'';
-                        html += `<tr><td><strong>${s.ticker}.SR</strong></td><td>${s.stock_name||''}</td><td>${(s.price||0).toFixed(2)}</td><td>${s.strength}/100</td><td>${gradeAr}</td><td>${(s.stop_loss||0).toFixed(2)}</td><td>${(s.take_profit||0).toFixed(2)}</td></tr>`;
+                        html += `<tr><td><strong>${s.ticker}</strong></td><td>${s.stock_name||''}</td><td>${(s.price||0).toFixed(2)}</td><td>${s.strength}/100</td><td>${gradeAr}</td><td>${(s.stop_loss||0).toFixed(2)}</td><td>${(s.take_profit||0).toFixed(2)}</td></tr>`;
                     });
                     html += '</table></div>';
                 }
@@ -525,7 +525,7 @@
                     html += '<h3 style="color:var(--red);margin:20px 0 10px">🔴 أقوى إشارات البيع</h3><div class="table-wrap"><table><tr><th>السهم</th><th>الاسم</th><th>السعر</th><th>القوة</th><th>الدرجة</th></tr>';
                     data.top_sells.forEach(s => {
                         const gradeAr = {STRONG:'قوية 🔴',MODERATE:'متوسطة 🟡',WEAK:'ضعيفة 🟠'}[s.grade]||'';
-                        html += `<tr><td><strong>${s.ticker}.SR</strong></td><td>${s.stock_name||''}</td><td>${(s.price||0).toFixed(2)}</td><td>${s.strength}/100</td><td>${gradeAr}</td></tr>`;
+                        html += `<tr><td><strong>${s.ticker}</strong></td><td>${s.stock_name||''}</td><td>${(s.price||0).toFixed(2)}</td><td>${s.strength}/100</td><td>${gradeAr}</td></tr>`;
                     });
                     html += '</table></div>';
                 }
@@ -544,7 +544,7 @@
                 if (data.error) { document.getElementById('stock-result').innerHTML = '<p class="empty">لا توجد بيانات</p>'; return; }
 
                 const naqi = data.naqi ? '<span class="naqi-badge">✅ نقي</span>' : '<span style="color:var(--red)">❌ غير نقي</span>';
-                let html = `<div style="text-align:center;margin:20px 0"><h3>${ticker}.SR — ${data.info.name}</h3><p style="color:var(--text-muted)">القطاع: ${data.info.sector} | ${naqi}</p></div>`;
+                let html = `<div style="text-align:center;margin:20px 0"><h3>${ticker} — ${data.info.name_ar || data.info.name}</h3><p style="color:var(--text-muted)">القطاع: ${data.info.sector} | ${naqi}</p></div>`;
 
                 if (data.indicators) {
                     const ind = data.indicators;
