@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 # Trading rules
-MAX_BUYS_PER_DAY = 3
+MAX_BUYS_PER_DAY = 5
 MAX_OPEN_POSITIONS = 5
 MIN_GRADE = "STRONG"  # Only buy STRONG signals (70+)
 
@@ -71,8 +71,7 @@ async def _auto_buy_strong_signals(result: dict):
             break
         if open_count + opened >= MAX_OPEN_POSITIONS:
             break
-        if _was_sold_today(signal["ticker"]):
-            continue  # Don't rebuy a stock sold today
+        # Allow rebuying if a new STRONG signal appears after selling
 
         trade = open_trade(signal)
         if trade:
