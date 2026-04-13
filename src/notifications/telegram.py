@@ -398,22 +398,25 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def cmd_stocks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """قائمة الأسهم الشائعة."""
-    await update.message.reply_html(
-        "<b>الأسهم الأكثر تداولاً:</b>\n\n"
-        "/stock 2222 - أرامكو السعودية\n"
-        "/stock 1120 - مصرف الراجحي\n"
-        "/stock 2010 - سابك\n"
-        "/stock 7010 - الاتصالات STC\n"
-        "/stock 2280 - المراعي\n"
-        "/stock 2082 - أكوا باور\n"
-        "/stock 1180 - البنك الأهلي SNB\n"
-        "/stock 1150 - مصرف الإنماء\n"
-        "/stock 4190 - جرير\n"
-        "/stock 4013 - د. سليمان الحبيب\n"
-        "/stock 1211 - معادن\n"
-        "/stock 2050 - صافولا\n"
-    )
+    """قائمة الأسهم النقية الشائعة."""
+    from src.data.tickers import is_naqi, get_display_name
+
+    # Popular naqi stocks
+    popular = [
+        "2222", "1120", "2010", "7010", "2280",
+        "2082", "1150", "4190", "4013", "1211",
+        "2050", "1140", "1020", "4002", "4004",
+    ]
+    # Filter to naqi only
+    naqi_popular = [t for t in popular if is_naqi(t)]
+
+    msg = "<b>\u2705 الأسهم النقية الأكثر تداولاً:</b>\n\n"
+    for t in naqi_popular:
+        name = get_display_name(t)
+        msg += f"/stock {t} - {name}\n"
+
+    msg += "\n<i>جميع الأسهم المعروضة نقية حسب قائمة العصيمي</i>"
+    await update.message.reply_html(msg)
 
 
 async def cmd_backtest(update: Update, context: ContextTypes.DEFAULT_TYPE):
