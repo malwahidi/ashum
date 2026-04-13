@@ -69,8 +69,8 @@ def api_scan():
         result = run_market_scan(save_to_db=False)
         return jsonify({
             "stats": result["stats"],
-            "top_buys": result["top_buys"][:5],
-            "top_sells": result["top_sells"][:5],
+            "top_buys": result["top_buys"],
+            "top_sells": result["top_sells"],
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

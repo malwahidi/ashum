@@ -513,21 +513,33 @@
                 </div>`;
 
                 if (data.top_buys.length) {
-                    html += '<h3 style="color:var(--accent);margin:20px 0 10px">🟢 أقوى إشارات الشراء</h3><div class="table-wrap"><table><tr><th>السهم</th><th>الاسم</th><th>السعر</th><th>القوة</th><th>الدرجة</th><th>وقف</th><th>هدف</th></tr>';
-                    data.top_buys.forEach(s => {
+                    const buyRows = (list) => list.map(s => {
                         const gradeAr = {STRONG:'قوية 🟢',MODERATE:'متوسطة 🟡',WEAK:'ضعيفة 🟠'}[s.grade]||'';
-                        html += `<tr><td><strong>${s.ticker}</strong></td><td>${s.stock_name||''}</td><td>${(s.price||0).toFixed(2)}</td><td>${s.strength}/100</td><td>${gradeAr}</td><td>${(s.stop_loss||0).toFixed(2)}</td><td>${(s.take_profit||0).toFixed(2)}</td></tr>`;
-                    });
+                        return `<tr><td><strong>${s.ticker}</strong></td><td>${s.stock_name||''}</td><td>${(s.price||0).toFixed(2)}</td><td>${s.strength}/100</td><td>${gradeAr}</td><td>${(s.stop_loss||0).toFixed(2)}</td><td>${(s.take_profit||0).toFixed(2)}</td></tr>`;
+                    }).join('');
+
+                    html += '<h3 style="color:var(--accent);margin:20px 0 10px">🟢 أقوى إشارات الشراء</h3><div class="table-wrap"><table><tr><th>السهم</th><th>الاسم</th><th>السعر</th><th>القوة</th><th>الدرجة</th><th>وقف</th><th>هدف</th></tr>';
+                    html += buyRows(data.top_buys.slice(0, 5));
                     html += '</table></div>';
+                    if (data.top_buys.length > 5) {
+                        html += `<div id="buy-all" style="display:none"><div class="table-wrap"><table><tr><th>السهم</th><th>الاسم</th><th>السعر</th><th>القوة</th><th>الدرجة</th><th>وقف</th><th>هدف</th></tr>${buyRows(data.top_buys.slice(5))}</table></div></div>`;
+                        html += `<div style="text-align:center;margin:10px 0"><a onclick="document.getElementById('buy-all').style.display='block';this.style.display='none'" style="color:var(--accent);cursor:pointer;font-weight:700">عرض الكل (${data.top_buys.length}) ▼</a></div>`;
+                    }
                 }
 
                 if (data.top_sells.length) {
-                    html += '<h3 style="color:var(--red);margin:20px 0 10px">🔴 أقوى إشارات البيع</h3><div class="table-wrap"><table><tr><th>السهم</th><th>الاسم</th><th>السعر</th><th>القوة</th><th>الدرجة</th></tr>';
-                    data.top_sells.forEach(s => {
+                    const sellRows = (list) => list.map(s => {
                         const gradeAr = {STRONG:'قوية 🔴',MODERATE:'متوسطة 🟡',WEAK:'ضعيفة 🟠'}[s.grade]||'';
-                        html += `<tr><td><strong>${s.ticker}</strong></td><td>${s.stock_name||''}</td><td>${(s.price||0).toFixed(2)}</td><td>${s.strength}/100</td><td>${gradeAr}</td></tr>`;
-                    });
+                        return `<tr><td><strong>${s.ticker}</strong></td><td>${s.stock_name||''}</td><td>${(s.price||0).toFixed(2)}</td><td>${s.strength}/100</td><td>${gradeAr}</td></tr>`;
+                    }).join('');
+
+                    html += '<h3 style="color:var(--red);margin:20px 0 10px">🔴 أقوى إشارات البيع</h3><div class="table-wrap"><table><tr><th>السهم</th><th>الاسم</th><th>السعر</th><th>القوة</th><th>الدرجة</th></tr>';
+                    html += sellRows(data.top_sells.slice(0, 5));
                     html += '</table></div>';
+                    if (data.top_sells.length > 5) {
+                        html += `<div id="sell-all" style="display:none"><div class="table-wrap"><table><tr><th>السهم</th><th>الاسم</th><th>السعر</th><th>القوة</th><th>الدرجة</th></tr>${sellRows(data.top_sells.slice(5))}</table></div></div>`;
+                        html += `<div style="text-align:center;margin:10px 0"><a onclick="document.getElementById('sell-all').style.display='block';this.style.display='none'" style="color:var(--red);cursor:pointer;font-weight:700">عرض الكل (${data.top_sells.length}) ▼</a></div>`;
+                    }
                 }
 
                 document.getElementById('scan-results').innerHTML = html;
