@@ -483,6 +483,8 @@
                     <div class="card"><div class="card-label">الربح/الخسارة</div><div class="card-value ${performance.total_pnl >= 0 ? 'positive' : 'negative'}">${performance.total_pnl >= 0 ? '+' : ''}${Number(performance.total_pnl).toLocaleString()}</div><div class="card-label">ريال</div></div>
                     <div class="card"><div class="card-label">رأس المال</div><div class="card-value">${Number(performance.capital).toLocaleString()}</div><div class="card-label">ريال</div></div>
                 `;
+                // Force 3 columns for performance cards
+                document.getElementById('perf-cards').style.gridTemplateColumns = 'repeat(3, 1fr)';
 
                 if (portfolio.open_positions.length > 0) {
                     let rows = portfolio.open_positions.map(p => `<tr>
