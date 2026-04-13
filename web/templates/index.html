@@ -530,7 +530,7 @@
 
         // Scan
         async function runScan() {
-            document.getElementById('scan-results').innerHTML = '<div class="loading"><div class="spinner"></div><p>جاري مسح 198 سهم نقي...</p></div>';
+            document.getElementById('scan-results').innerHTML = '<div class="loading"><div class="spinner"></div><p>جاري مسح الأسهم النقية...</p></div>';
             try {
                 const res = await fetch('/api/scan');
                 const data = await res.json();
