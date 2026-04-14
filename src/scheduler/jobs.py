@@ -54,11 +54,14 @@ async def _auto_buy_strong_signals(result: dict):
     Works for both morning and intraday scans.
     """
     from src.trading.paper_trader import open_trade, get_portfolio
+    from src.analysis.sentiment import apply_sentiment_to_signals
 
     portfolio = get_portfolio()
     open_count = portfolio["num_positions"]
 
     top_buys = result.get("top_buys", [])
+    await apply_sentiment_to_signals(top_buys[:10])
+    top_buys.sort(key=lambda s: s["strength"], reverse=True)
     strong_buys = [s for s in top_buys if s.get("grade") == MIN_GRADE]
 
     if not strong_buys:

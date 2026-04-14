@@ -269,26 +269,13 @@ async def cmd_scan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("\U0001f50d جاري مسح السوق... انتظر من فضلك (1-2 دقيقة).")
 
     from src.analysis.screener import run_market_scan
-    from src.analysis.sentiment import analyze_stock_sentiment
+    from src.analysis.sentiment import apply_sentiment_to_signals
     result = run_market_scan(save_to_db=False)
 
-    # Add sentiment to top signals
     top_buys = result.get("top_buys", [])
     top_sells = result.get("top_sells", [])
-    for signal in (top_buys[:5] + top_sells[:3]):
-        try:
-            sentiment = await analyze_stock_sentiment(signal["ticker"], signal.get("stock_name", ""))
-            if sentiment:
-                signal["sentiment"] = sentiment
-                signal["strength"] = max(0, min(100, signal["strength"] + sentiment.score))
-                from src.analysis.signals import get_signal_grade
-                signal["grade"] = get_signal_grade(signal["strength"])
-                if sentiment.score != 0:
-                    signal["reasons"].append(f"تحليل ذكاء اصطناعي: {sentiment.summary}")
-        except Exception as e:
-            logger.error(f"Sentiment failed for {signal['ticker']}: {e}")
+    await apply_sentiment_to_signals(top_buys[:5] + top_sells[:3])
 
-    # Re-sort after sentiment
     top_buys.sort(key=lambda s: s["strength"], reverse=True)
 
     summary = format_scan_summary(result)
@@ -329,18 +316,10 @@ async def cmd_stock(update: Update, context: ContextTypes.DEFAULT_TYPE):
     stock_info = get_stock_info(ticker) or {"name": ticker, "sector": "غير محدد"}
     signal = generate_signal(ticker, df)
 
-    # Get AI sentiment
-    from src.analysis.sentiment import analyze_stock_sentiment
-    sentiment = await analyze_stock_sentiment(ticker, stock_info.get("name", ticker))
-
     if signal:
-        if sentiment:
-            signal["sentiment"] = sentiment
-            signal["strength"] = max(0, min(100, signal["strength"] + sentiment.score))
-            from src.analysis.signals import get_signal_grade
-            signal["grade"] = get_signal_grade(signal["strength"])
-            if sentiment.score != 0:
-                signal["reasons"].append(f"تحليل ذكاء اصطناعي: {sentiment.summary}")
+        signal.setdefault("stock_name", stock_info.get("name", ticker))
+        from src.analysis.sentiment import apply_sentiment_to_signals
+        await apply_sentiment_to_signals([signal])
         msg = format_signal_message(signal)
         await update.message.reply_html(msg)
     else:

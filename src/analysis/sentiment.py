@@ -208,6 +208,33 @@ async def analyze_stock_sentiment(ticker: str, stock_name: str) -> StockSentimen
     return result
 
 
+async def apply_sentiment_to_signals(signals: list[dict]) -> None:
+    """
+    Apply Gemini sentiment to each signal in place.
+    Adjusts strength (clamped 0-100), updates grade, attaches sentiment object,
+    and appends Arabic summary to reasons when score != 0.
+    Daily cache makes repeat calls cheap.
+    """
+    from src.analysis.signals import get_signal_grade
+
+    for signal in signals:
+        try:
+            sentiment = await analyze_stock_sentiment(
+                signal["ticker"], signal.get("stock_name", "")
+            )
+            if not sentiment:
+                continue
+            signal["sentiment"] = sentiment
+            signal["strength"] = max(0, min(100, signal["strength"] + sentiment.score))
+            signal["grade"] = get_signal_grade(signal["strength"])
+            if sentiment.score != 0:
+                signal.setdefault("reasons", []).append(
+                    f"تحليل ذكاء اصطناعي: {sentiment.summary}"
+                )
+        except Exception as e:
+            logger.error(f"Sentiment failed for {signal.get('ticker')}: {e}")
+
+
 def get_cached_sentiment(ticker: str) -> StockSentiment | None:
     """Get cached sentiment without making API call."""
     today = date.today()
