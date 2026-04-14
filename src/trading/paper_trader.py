@@ -33,6 +33,7 @@ def _load_data() -> dict:
         "capital": INITIAL_CAPITAL,
         "open_positions": [],
         "closed_trades": [],
+        "transaction_log": [],
         "total_pnl": 0,
     }
 
@@ -89,6 +90,21 @@ def open_trade(signal: dict) -> dict | None:
     }
 
     data["open_positions"].append(trade)
+
+    # Log transaction
+    if "transaction_log" not in data:
+        data["transaction_log"] = []
+    data["transaction_log"].append({
+        "action": "شراء",
+        "ticker": signal["ticker"],
+        "stock_name": signal.get("stock_name", signal["ticker"]),
+        "price": price,
+        "shares": shares,
+        "strength": signal.get("strength", 0),
+        "grade": signal.get("grade", ""),
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+    })
+
     _save_data(data)
 
     logger.info(f"Paper trade opened: {signal['signal_type']} {signal['ticker']} @ {price}")
@@ -166,6 +182,21 @@ def check_positions() -> list[dict]:
             data["closed_trades"].append(closed_trade)
             data["total_pnl"] = round(data["total_pnl"] + pnl, 2)
             data["capital"] = round(data["capital"] + pnl, 2)
+
+            # Log transaction
+            if "transaction_log" not in data:
+                data["transaction_log"] = []
+            data["transaction_log"].append({
+                "action": "بيع",
+                "ticker": ticker,
+                "stock_name": pos.get("stock_name", ticker),
+                "price": current_price,
+                "shares": shares,
+                "reason": exit_reason,
+                "pnl": round(pnl, 2),
+                "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            })
+
             logger.info(f"Paper trade closed: {ticker} {exit_reason} P&L: {pnl:+.0f}")
         else:
             still_open.append(pos)

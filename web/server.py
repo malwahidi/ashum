@@ -57,7 +57,12 @@ def api_portfolio():
         for t in closed:
             t["stock_name"] = get_display_name(t["ticker"])
 
-        return jsonify({"portfolio": portfolio, "performance": perf, "closed_trades": closed})
+        # Transaction log
+        log = data.get("transaction_log", [])
+        for entry in log:
+            entry["stock_name"] = get_display_name(entry.get("ticker", ""))
+
+        return jsonify({"portfolio": portfolio, "performance": perf, "closed_trades": closed, "transaction_log": log})
     except Exception as e:
         # Return empty portfolio instead of error
         return jsonify({

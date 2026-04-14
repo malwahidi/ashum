@@ -525,6 +525,32 @@
                             </table></div>
                         </div>`;
                 }
+                // Transaction log
+                const log = data.transaction_log || [];
+                if (log.length > 0) {
+                    let logRows = log.slice().reverse().map(t => {
+                        const actionColor = t.action === 'شراء' ? 'accent' : (t.pnl >= 0 ? 'accent' : 'red');
+                        const actionIcon = t.action === 'شراء' ? '🟢' : '🔴';
+                        return `<tr>
+                            <td>${t.time || ''}</td>
+                            <td>${actionIcon} ${t.action}</td>
+                            <td><strong>${t.ticker}</strong></td>
+                            <td>${t.stock_name}</td>
+                            <td>${(t.price||0).toFixed(2)}</td>
+                            <td>${t.shares||0}</td>
+                            <td>${t.reason||t.grade||''}</td>
+                            <td style="color:var(--${actionColor})">${t.pnl ? (t.pnl>=0?'+':'')+Number(t.pnl).toLocaleString()+' ريال' : '—'}</td>
+                        </tr>`;
+                    }).join('');
+                    document.getElementById('portfolio-positions').innerHTML += `
+                        <div style="margin-top:30px">
+                            <div class="section-title">📋 سجل العمليات اليومي</div>
+                            <div class="table-wrap"><table>
+                                <tr><th>الوقت</th><th>العملية</th><th>السهم</th><th>الاسم</th><th>السعر</th><th>الكمية</th><th>التفاصيل</th><th>الربح/الخسارة</th></tr>
+                                ${logRows}
+                            </table></div>
+                        </div>`;
+                }
             } catch(e) {}
         }
 
